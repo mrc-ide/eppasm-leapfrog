@@ -29,7 +29,10 @@ fp_to_leapfrog_params <- function(fp) {
     }
     transmission_rate_hts <- c(rep(fp$rvec[1], pad_num), fp$rvec)
     initial_incidence <- fp$iota
-    epidemic_start_hts <- fp$ss$time_epi_start
+
+    ## Index in proj.steps where epidemic is seeded
+    epidemic_start_hts <- which(fp$proj.steps == fp$tsEpidemicStart)
+    
     relative_infectiousness_art <- fp$relinfectART
     pAG_INCIDPOP <- 0
   } else if (fp$eppmod %in% c("directincid_ann", "directincid_hts")) {
