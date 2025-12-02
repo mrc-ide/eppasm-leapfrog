@@ -355,7 +355,10 @@ prep_fp_fitmod <- function(obj, ..., epp = FALSE) {
   ## Prepare the incidence model
   fp$incidmod <- "eppspectrum"
 
-  fp
+  list(
+    fp = fp,
+    likdat = likdat
+  )
 }
 
 
@@ -366,7 +369,9 @@ fitmod <- function(obj, ..., epp=FALSE, B0 = 1e5, B = 1e4, B.re = 3000, number_k
                    likelihood=eppasm:::likelihood,
                    optfit=FALSE, opt_method="BFGS", opt_init=NULL, opt_maxit=1000, opt_diffstep=1e-3, opthess=TRUE){
 
-  fp <- prep_fp_fitmod(obj, ..., epp=epp)
+  prep <- prep_fp_fitmod(obj, ..., epp=epp)
+  fp <- prep$fp
+  likdat <- prep$likdat
 
   ## Fit using optimization
   if(optfit){
