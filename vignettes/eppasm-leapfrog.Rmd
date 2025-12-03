@@ -45,7 +45,7 @@ mod <- simmod(fp, VERSION = "leapfrog")
 
 # Fit model
 
-```{r}
+```{r, eval=FALSE}
 fitmod(inputs[["Maputo Cidade"]], eppmod = "rhybrid", rw_start = 2005,
        B0=1e3, B=1e2, opt_iter = 1, number_k=50)
 ```
