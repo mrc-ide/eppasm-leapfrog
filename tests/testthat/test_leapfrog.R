@@ -2,7 +2,7 @@ test_that("can run convert transmission input fp into leapfrog params", {
   pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package = "eppasm")
   inputs <- prepare_spec_fit(pjnz, 2025.5)
 
-  fp <- prep_fp_fitmod(inputs$Urban, eppmod = "rhybrid")
+  fp <- prep_fp_fitmod(inputs$Urban, eppmod = "rhybrid")$fp
   fp <- stats::update(fp, list=fnCreateParam(theta_rhybrid, fp))
 
   params <- fp_to_leapfrog_params(fp)
@@ -47,8 +47,8 @@ test_that("can run simmod with leapfrog transmission input data", {
   pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package = "eppasm")
   inputs <- prepare_spec_fit(pjnz, 2018.5)
 
-  fp <- prep_fp_fitmod(inputs$Urban, eppmod = "rhybrid")
-  fp <- stats::update(fp, list=fnCreateParam(theta_rhybrid, fp))
+  fp <- prep_fp_fitmod(inputs$Urban, eppmod = "rhybrid")$fp
+  fp <- update.specfp(fp, list=fnCreateParam(theta_rhybrid, fp))
 
   mod <- simmod(fp, VERSION = "leapfrog")
   mod_expected <- simmod(fp, VERSION = "C")
