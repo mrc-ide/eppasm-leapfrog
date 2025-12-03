@@ -28,6 +28,6 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-URL: https://github.com/mrc-ide/eppasm
-BugReports: https://github.com/mrc-ide/eppasm/issues
+URL: https://mrc-ide.github.io/eppasm-leapfrog/
+BugReports: https://github.com/mrc-ide/eppasm-leapfrog/issues
 RoxygenNote: 7.3.3

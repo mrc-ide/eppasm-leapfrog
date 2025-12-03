@@ -15,26 +15,23 @@ knitr::opts_chunk$set(
 # eppasm
 
   <!-- badges: start -->
-  [![R-CMD-check](https://github.com/mrc-ide/eppasm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mrc-ide/eppasm/actions/workflows/R-CMD-check.yaml)  
+  [![R-CMD-check](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml)  
   <!-- badges: end -->
 
 
 The goal of eppasm is to ...
 
+Forked from [eppasm](https://github.com/mrc-ide/eppasm) using [leapfrog](https://github.com/mrc-ide/leapfrog) as the underlying model.
+
 ## Installation
 
-Install compiled version from mrc-ide R-universe with:
+Install from [GitHub](https://github.com/) with:
 
 ```r
-install.packages('eppasm', repos = c('https://mrc-ide.r-universe.dev', 'https://cloud.r-project.org'))
+# install.packages("remotes")
+remotes::install_github("mrc-ide/eppasm-leapfrog")
 ```
 
-or from [GitHub](https://github.com/) with:
-
-```r
-# install.packages("devtools")
-devtools::install_github("mrc-ide/eppasm")
-```
 ## Example
 
 ## Test files
