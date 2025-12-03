@@ -10,6 +10,7 @@ Imports:
     binom,
     epp (>= 0.4.1),
     fastmatch (>= 1.1),
+    leapfrog,
     mvtnorm,
     plyr,
     readxl,

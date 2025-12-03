@@ -741,21 +741,25 @@ agepregartcov <- function(mod, fp,
 }
 
 
-
+#' @export
 incid_sexratio.spec <- function(mod) {
   inc <- ageincid(mod, 1, 1:2, seq_len(dim(mod)[4]), 35)[,,]
   inc[2,] / inc[1,]
 }
 
-
+#' @export
 calc_nqx.spec <- function(mod, fp, n=45, x=15, nonhiv=FALSE) {
   mx <- agemx(mod, nonhiv)
   return(1-exp(-colSums(mx[x+1:n-fp$ss$AGE_START,,])))
 }
 
-
+#' @export
 pop15to49.spec <- function(mod){colSums(mod[1:35,,,],,3)}
+
+#' @export
 artpop15to49.spec <- function(mod){colSums(attr(mod, "artpop")[,,1:8,,],,4)}
+
+#' @export
 artpop15plus.spec <- function(mod){colSums(attr(mod, "artpop"),,4)}
 
 #' @export
@@ -772,4 +776,5 @@ artcov15plus.spec <- function(mod, sex=1:2, ...) {
   return(n_art / (n_hiv+n_art))
 }
 
+#' @export
 age15pop.spec <- function(mod){colSums(mod[1,,,],,2)}

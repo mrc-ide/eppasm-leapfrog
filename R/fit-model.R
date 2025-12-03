@@ -293,6 +293,15 @@ leapfrog_params_to_fit_params <- function(leapfrog_params, eppmod, AGE_START = 1
   )
 }
 
+#' Prepare fp object for fitting and prepare likelihood data
+#'
+#' @param obj specfp or eppfp object
+#' @param ... Additional parameters to override on `obj`
+#' @param epp If TRUE prep EPP model fit
+#'
+#' @returns List containing `fp` object ready for fitting and likelihood
+#'   data `likdat`
+#' @export
 prep_fp_fitmod <- function(obj, ..., epp = FALSE) {
   ## ... : updates to fixed parameters (fp) object to specify fitting options
 
@@ -461,7 +470,7 @@ rw_projection <- function(fit) {
 }
 
 
-## simulate incidence and prevalence
+#' @export
 simfit.specfit <- function(fit,
                            rwproj=fit$fp$eppmod == "rspline",
                            ageprevdat=FALSE,
@@ -611,6 +620,7 @@ simfit.specfit <- function(fit,
   return(fit)
 }
 
+#' @export
 simfit.eppfit <- function(fit, rwproj=fit$fp$eppmod == "rspline", pregprev=TRUE){
 
   fit$param <- lapply(seq_len(nrow(fit$resample)), function(ii) fnCreateParam(fit$resample[ii,], fit$fp))

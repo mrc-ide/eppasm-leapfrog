@@ -32,7 +32,7 @@ fp_to_leapfrog_params <- function(fp) {
 
     ## Index in proj.steps where epidemic is seeded
     epidemic_start_hts <- which(fp$proj.steps == fp$tsEpidemicStart)
-    
+
     relative_infectiousness_art <- fp$relinfectART
     pAG_INCIDPOP <- 0
   } else if (fp$eppmod %in% c("directincid_ann", "directincid_hts")) {

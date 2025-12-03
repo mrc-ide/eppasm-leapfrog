@@ -109,11 +109,13 @@ create_outputs <- function(fit){
   paramlist <- lapply(seq_len(nrow(fit$resample)), function(ii) fnCreateParam(fit$resample[ii,], fit$fp))
   fplist <- lapply(paramlist, function(par) stats::update(fit$fp, list=par))
   modlist <- lapply(fplist, simmod)
-  
+
   out <- summary_outputs(fit, modlist)
   out
 }
 
+#' Crate aggr outputs
+#'
 #' @param fitlist list of model fits to aggregate.
 #' @param fitnat single fit to use as the base fit with aggregation.
 #' @param both flag indicating whether to return outputs for both aggregated fit and individual fits (default TRUE).

@@ -1156,7 +1156,7 @@ read_specdp_demog_param <- function(pjnz, use_ep5=FALSE){
 
 
 
-## Read percentage urban input from EPP XML file
+#' Read percentage urban input from EPP XML file
 #'
 #' @param pjnz file path to Spectrum PJNZ file.
 #'
@@ -1181,7 +1181,7 @@ read_epp_perc_urban <- function(pjnz){
   return(stats::setNames(perc_urban, yr_start:yr_end))
 }
 
-## Read epidemic start year from EPP XML file
+#' Read epidemic start year from EPP XML file
 #'
 #' @param pjnz file path to Spectrum PJNZ file.
 #' @return vector of epidemic start year for each EPP subregion with region names
@@ -1211,7 +1211,7 @@ read_epp_t0 <- function(pjnz){
 }
 
 
-## Read subpopulation size input file
+#' Read subpopulation size input file
 #'
 #' @param filepath file path to .subp file
 #'
