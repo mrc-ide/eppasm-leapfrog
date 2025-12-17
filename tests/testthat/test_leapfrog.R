@@ -17,7 +17,9 @@ test_that("can run convert transmission input fp into leapfrog params", {
 
 test_that("can convert output from leapfrog into mod data", {
   pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package="eppasm")
-  params <- leapfrog::prepare_leapfrog_parameters(pjnz, use_coarse_age_groups = TRUE)
+  params <- leapfrog::process_pjnz(pjnz,
+                                   extract_child_params = FALSE,
+                                   use_coarse_age_groups = TRUE)
 
   n_years <- dim(params$Sx)[length(dim(params$Sx))]
   output_years <- seq(params$projection_start_year, params$projection_start_year + n_years - 1)
