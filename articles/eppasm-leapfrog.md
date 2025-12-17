@@ -1,0 +1,48 @@
+# Example of using EPPASM with leapfrog model engine
+
+EPPASM can use the [leapfrog](https://github.com/mrc-ide/leapfrog) model
+during simulation and fitting. This vignette shows an example of using
+leapfrog with EPPASM.
+
+Firstly we need to read the data
+
+``` r
+pjnz <- system.file("extdata/testpjnz", "Mozambique_Maputo_Cidade2018.PJNZ", package="eppasm")
+```
+
+## Simulate with direct incidence input
+
+``` r
+fp <- eppasm::prepare_directincid(pjnz)
+mod <- eppasm::simmod(fp, VERSION = "leapfrog")
+```
+
+## Simulate with transmission input
+
+``` r
+theta_rhybrid <- c(-0.407503322169364, -2.76794181367538, -1.26018073624346, 1995.96447776502,
+                   -0.00307437171215574, 0.0114118307148102, 0.00760958379603691, 0.02,
+                   2.24103194827232, -0.0792123921862689, -5.01917961803606, 0.359444135205712,
+                   -6.10051517060137)
+
+inputs <- eppasm::prepare_spec_fit(pjnz, 2018.5)
+
+prep <- eppasm::prep_fp_fitmod(inputs[["Maputo Cidade"]], eppmod = "rhybrid")
+fp <- stats::update(prep$fp, list=eppasm::fnCreateParam(theta_rhybrid, prep$fp))
+
+mod <- eppasm::simmod(fp, VERSION = "leapfrog")
+```
+
+## Fit model
+
+``` r
+eppasm::fitmod(
+  inputs[["Maputo Cidade"]],
+  eppmod = "rhybrid",
+  rw_start = 2005,
+  B0=1e3,
+  B=1e2,
+  opt_iter = 1,
+  number_k=50
+)
+```
