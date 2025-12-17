@@ -1,6 +1,6 @@
 #' @useDynLib eppasm eppasmC
 #' @export
-simmod.specfp <- function(fp, VERSION="C", ...) {
+simmod.specfp <- function(fp, VERSION="leapfrog", ...) {
 
   if (!exists("popadjust", where=fp)) {
     fp$popadjust <- FALSE
