@@ -351,6 +351,32 @@ prepare_rspline_model <- function(fp, numKnots=NULL, tsEpidemicStart=fp$ss$time_
   return(fp)
 }
 
+prepare_rspline_model_lf <- function(params, num_knots = 7, ts_epidemic_start = 1975.5) {
+
+  if(is.null(params$num_knots)) {
+    params$num_knots <- num_knots
+  }
+
+  # TODO: do we need ts_epidemic_start here?
+  # TODO: separate out params and fitting params like rvec_spldes?
+  params$ts_epidemic_start <- params$proj_steps[which.min(abs(params$proj_steps - ts_epidemic_start))]
+  epi_steps <- params$proj_steps[params$proj_steps >= params$ts_epidemic_start]
+  proj_dur <- diff(range(epi_steps))
+  rvec_knots <- seq(min(epi_steps) - 3 * proj_dur / (params$num_knots - 3), max(epi_steps) + 3 * proj_dur / (params$num_knots - 3), proj_dur / (params$num_knots - 3))
+  params$rvec_spldes <- rbind(matrix(0, length(params$proj_steps) - length(epi_steps), params$num_knots),
+                          splines::splineDesign(rvec_knots, epi_steps))
+
+  if (is.null(params$rtpenord)) {
+    params$rtpenord <- 2L
+  }
+  if (is.null(params$eppmod)) {
+    params$eppmod <- "rspline"
+  }
+  params$iota <- NULL
+
+  params
+}
+
 
 #' @export
 update.specfp <- function (object, ..., keep.attr = TRUE, list = vector("list")) {

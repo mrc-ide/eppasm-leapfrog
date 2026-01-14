@@ -99,12 +99,36 @@ ancsite_pred_df <- function(ancsite_df, fp) {
   list(df = df, datgrp = datgrp)
 }
 
+#' Prepare design matrix indices for ANC prevalence predictions
+#'
+#' @param ancsite_df data.frame of site-level ANC design for predictions
+#' @param params Leapfrog parameter inputs
+#'
+#' @export
+#' TODO: examples
+#'
+ancsite_pred_df_lf <- function(ancsite_df, params) {
+  df <- ancsite_df
+  anchor_year <- params$projection_start_year
+
+  df$aidx <- df$age - params$ss$AGE_START + 1L
+  df$yidx <- df$year - anchor_year + 1
+
+  ## List of all unique agegroup / year combinations for which prevalence is needed
+  datgrp <- unique(df[c("aidx", "yidx", "agspan")])
+  datgrp$qMidx <- seq_len(nrow(datgrp))
+
+  ## Indices for accessing prevalence offset from datgrp
+  df <- merge(df, datgrp)
+
+  list(df = df, datgrp = datgrp)
+}
+
 
 #' Prepare site-level ANC prevalence data for EPP random-effects likelihood
 #'
 #' @param ancsitedat data.frame of site-level ANC data
 #' @param fp fixed parameter input list, including state space
-
 prepare_ancsite_likdat <- function(ancsitedat, fp){
 
   d <- ancsite_pred_df(ancsitedat, fp)
@@ -128,6 +152,36 @@ prepare_ancsite_likdat <- function(ancsitedat, fp){
        datgrp = d$datgrp,
        Xancsite = Xancsite,
        df_idx.lst = df_idx.lst)
+}
+
+#' Prepare site-level ANC prevalence data for EPP random-effects likelihood
+#'
+#' @param params Leapfrog parameters list, including state space
+#' @param ancsitedat data.frame of site-level ANC data
+#' @noRd
+prepare_ancsite_likdat_lf <- function(ancsitedat, params) {
+
+  d <- ancsite_pred_df_lf(ancsitedat, params)
+
+  df <- d$df[c("site", "year", "used", "type", "age", "agspan",
+               "n", "prev", "aidx", "yidx", "qMidx")]
+
+  ## Calculate probit transformed prevalence and variance approximation
+  df$pstar <- (df$prev * df$n + 0.5) / (df$n + 1)
+  df$W <- stats::qnorm(df$pstar)
+  df$v <- 2 * pi * exp(df$W^2) * df$pstar * (1 - df$pstar) / df$n
+
+  ## Design matrix for fixed effects portion
+  df$type <- factor(df$type, c("ancss", "ancrt"))
+  Xancsite <- stats::model.matrix(~type, df)
+
+  ## Indices for observation
+  df_idx_lst <- split(seq_len(nrow(df)), factor(df$site))
+
+  list(df = df,
+       datgrp = d$datgrp,
+       Xancsite = Xancsite,
+       df_idx_lst = df_idx_lst)
 }
 
 #' @export
@@ -197,6 +251,28 @@ prepare_ancrtcens_likdat <- function(dat, fp){
   dat$yidx <- dat$year - anchor.year + 1
 
   return(dat)
+}
+
+prepare_ancrtcens_likdat_lf <- function(dat, params) {
+
+  anchor_year <- params$projection_start_year
+
+  x_ancrt <- (dat$prev * dat$n + 0.5) / (dat$n + 1)
+  dat$w_ancrt <- stats::qnorm(x_ancrt)
+  dat$v_ancrt <- 2 * pi * exp(dat$w_ancrt^2) * x_ancrt * (1 - x_ancrt) / dat$n
+
+  if(is.null(dat$age)) {
+    dat$age <- rep(15, nrow(dat))
+  }
+
+  if(is.null(dat$agspan)) {
+    dat$agspan <- rep(35, nrow(dat))
+  }
+
+  dat$aidx <- dat$age - params$ss$AGE_START + 1
+  dat$yidx <- dat$year - anchor_year + 1
+
+  dat
 }
 
 #' @export
@@ -324,6 +400,92 @@ fnCreateParam <- function(theta, fp){
   return(param)
 }
 
+#' @export
+fnCreateParam_lf <- function(theta, fp) {
+
+  if (fp$eppmod %in% c("rspline", "logrw")) {
+
+    epp_nparam <- fp$num_knots + 1
+
+    if (fp$eppmod == "rspline") {
+      u <- theta[1:fp$num_knots]
+      if(fp$rtpenord == 2){
+        beta <- numeric(fp$num_knots)
+        beta[1] <- u[1]
+        beta[2] <- u[1] + u[2]
+        for (i in 3:fp$num_knots) {
+          beta[i] <- -beta[i - 2] + 2 * beta[i - 1] + u[i]
+        }
+      } else {# first order penalty
+        beta <- cumsum(u)
+      }
+    } else if (fp$eppmod %in% "logrw") {
+      beta <- theta[1:fp$num_knots]
+    }
+
+    param <- list(beta = beta,
+                  rvec = as.vector(fp$rvec_spldes %*% beta))
+
+    if (fp$eppmod %in% "logrw") {
+      param$rvec <- exp(param$rvec)
+    }
+
+    if (!is.null(fp$r0logiotaratio) && fp$r0logiotaratio) {
+      param$iota <- exp(param$rvec[fp$proj_steps == fp$ts_epidemic_start] * theta[fp$num_knots + 1])
+    } else {
+      param$iota <- transf_iota_lf(theta[fp$numKnots + 1], fp)
+    }
+
+  } else if (fp$eppmod == "rlogistic") {
+    epp_nparam <- 5
+    par <- theta[1:4]
+    par[3] <- exp(theta[3])
+    param <- list()
+    param$rvec <- exp(rlogistic(fp$proj_steps, par))
+    param$iota <- transf_iota_lf(theta[5], fp)
+  } else {
+    epp_nparam <- fp$rt$n_param+1
+    param <- list()
+    param$rvec <- create_rvec(theta[1:fp$rt$n_param], fp$rt)
+    param$iota <- transf_iota_lf(theta[fp$rt$n_param+1], fp)
+  }
+
+  if (fp$ancsitedata) {
+    param$ancbias <- theta[epp_nparam+1]
+    if (is.null(param$v_infl)) {
+      anclik_nparam <- 2
+      param$v_infl <- exp(theta[epp_nparam+2])
+    } else {
+      anclik_nparam <- 1
+    }
+  }
+  else {
+    anclik_nparam <- 0
+  }
+
+
+  paramcurr <- epp_nparam + anclik_nparam
+
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("census", "both")) {
+    param$log_frr_adjust <- theta[paramcurr+1]
+    param$frr_cd4 <- fp$frr_cd4 * exp(param$log_frr_adjust)
+    param$frr_art <- fp$frr_art * exp(param$log_frr_adjust)
+
+    if(is.null(fp$ancrtcens_vinfl)){
+      param$ancrtcens_vinfl <- exp(theta[paramcurr+2])
+      paramcurr <- paramcurr+2
+    } else {
+      paramcurr <- paramcurr+1
+    }
+  }
+  if(exists("ancrt", fp) && fp$ancrt %in% c("site", "both")){
+    param$ancrtsite_beta <- theta[paramcurr+1]
+    paramcurr <- paramcurr+1
+  }
+
+  param
+}
+
 
 
 ########################################################
@@ -362,6 +524,42 @@ prepare_hhsageprev_likdat <- function(hhsage, fp){
   hhsage$agspan <- endage - startage + 1L
 
   return(subset(hhsage, aidx > 0))
+}
+
+#' Prepare age-specific HH survey prevalence likelihood data
+prepare_hhsageprev_likdat_lf <- function(hhsage, params) {
+  anchor_year <- params$projection_start_year
+
+  hhsage$w_hhs <- stats::qnorm(hhsage$prev)
+  hhsage$v_hhs <- 2 * pi * exp(hhsage$w_hhs^2) * hhsage$se^2
+  hhsage$sd_w_hhs <- sqrt(hhsage$v_hhs)
+
+  if (!is.null(hhsage$deff_approx)) {
+    hhsage$n_eff <- hhsage$n / hhsage$deff_approx
+  } else if (!is.null(hhsage$deff_approx)) {
+    hhsage$n_eff <- hhsage$n / hhsage$deff
+  } else {
+    hhsage$n_eff <- hhsage$prev * (1 - hhsage$prev) / hhsage$se^2
+  }
+  hhsage$x_eff <- hhsage$n_eff * hhsage$prev
+
+  if (is.null(hhsage$sex)) {
+    hhsage$sex <- rep("both", nrow(hhsage))
+  }
+
+  if (is.null(hhsage$agegr)) {
+    hhsage$agegr <- "15-49"
+  }
+
+  startage <- as.integer(sub("([0-9]*)-([0-9]*)", "\\1", hhsage$agegr))
+  endage <- as.integer(sub("([0-9]*)-([0-9]*)", "\\2", hhsage$agegr))
+
+  hhsage$sidx <- match(hhsage$sex, c("both", "male", "female")) - 1L
+  hhsage$aidx <- startage - params$ss$AGE_START+1L
+  hhsage$yidx <- as.integer(hhsage$year - (anchor_year - 1))
+  hhsage$agspan <- endage - startage + 1L
+
+  subset(hhsage, aidx > 0)
 }
 
 #' Log likelihood for age-specific household survey prevalence
@@ -442,6 +640,33 @@ prepare_hhsartcov_likdat <- function(hhsartcov, fp){
   return(subset(hhsartcov, aidx > 0))
 }
 
+prepare_hhsartcov_likdat_lf <- function(hhsartcov, params) {
+
+  anchor_year <- params$projection_start_year
+
+  hhsartcov$w_hhs <- stats::qnorm(hhsartcov$artcov)
+  hhsartcov$v_hhs <- 2 * pi * exp(hhsartcov$w_hhs^2) * hhsartcov$se^2
+  hhsartcov$sd_w_hhs <- sqrt(hhsartcov$v_hhs)
+
+  if (is.null(hhsartcov$sex)) {
+    hhsartcov$sex <- rep("both", nrow(hhsartcov))
+  }
+
+  if (is.null(hhsartcov$agegr)) {
+    hhsartcov$agegr <- "15-49"
+  }
+
+  startage <- as.integer(sub("([0-9]*)-([0-9]*)", "\\1", hhsartcov$agegr))
+  endage <- as.integer(sub("([0-9]*)-([0-9]*)", "\\2", hhsartcov$agegr))
+
+  hhsartcov$sidx <- match(hhsartcov$sex, c("both", "male", "female")) - 1L
+  hhsartcov$aidx <- startage - params$ss$AGE_START+1L
+  hhsartcov$yidx <- as.integer(hhsartcov$year - (anchor_year - 1))
+  hhsartcov$agspan <- endage - startage + 1L
+
+  subset(hhsartcov, aidx > 0)
+}
+
 
 #' Log likelihood for age-specific household survey prevalence
 ll_hhsartcov <- function(mod, fp, dat, pointwise = FALSE){
@@ -482,6 +707,16 @@ prepare_hhsincid_likdat <- function(hhsincid, fp){
   hhsincid$log_incid.se <- hhsincid$se/hhsincid$incid
 
   return(hhsincid)
+}
+
+prepare_hhsincid_likdat_lf <- function(hhsincid, params) {
+  anchor_year <- params$projection_start_year
+
+  hhsincid$idx <- hhsincid$year - (anchor_year - 1)
+  hhsincid$log_incid <- log(hhsincid$incid)
+  hhsincid$log_incid_se <- hhsincid$se / hhsincid$incid
+
+  hhsincid
 }
 
 #' Log-likelhood for direct incidence estimate from household survey
@@ -539,6 +774,49 @@ prepare_likdat <- function(eppd, fp){
   }
 
   return(likdat)
+}
+
+#' Prepare likelihood data from leapfrog data
+#'
+#' @param params Leapfrog input data
+#' @param eppd EPP input data
+#'
+#' @returns List containing likelihood data
+#' @export
+prepare_likdat_lf <- function(params, eppd) {
+
+  likdat <- list()
+
+  likdat$hhs_dat <- prepare_hhsageprev_likdat_lf(eppd$hhs, params)
+
+  if (!is.null(eppd$ancsitedat)) {
+
+    ancsitedat <- eppd$ancsitedat
+
+    if (!is.null(params$ancrt) && params$ancrt %in% c("none", "census")) {
+      ancsitedat <- subset(ancsitedat, type == "ancss")
+    }
+
+    likdat$ancsite_dat <- prepare_ancsite_likdat_lf(ancsitedat, params)
+  }
+
+  if (!is.null(eppd$ancrtcens)) {
+    if (!is.null(params$ancrt) && params$ancrt %in% c("none", "site")) {
+      eppd$ancrtcens <- NULL
+    } else {
+      likdat$ancrtcens_dat <- prepare_ancrtcens_likdat_lf(eppd$ancrtcens, params)
+    }
+  }
+
+  if(!is.null(eppd$hhsincid)) {
+    likdat$hhsincid_dat <- prepare_hhsincid_likdat_lf(eppd$hhsincid, params)
+  }
+
+  if(!is.null(eppd$hhsartcov)) {
+    likdat$hhsartcov_dat <- prepare_hhsartcov_likdat_lf(eppd$hhsartcov, params)
+  }
+
+  likdat
 }
 
 

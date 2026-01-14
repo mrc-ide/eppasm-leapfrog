@@ -102,6 +102,69 @@ prepare_rhybrid <- function(fp,
   return(fp)
 }
 
+#' Setup the r-hybrid model
+#'
+#' @param fp Leapfrog parameters object
+#' @param tsEpidemicStart time step at which epidemic is seeded
+#' @param rw_start time when random walk starts
+#' @param rw_trans number of years to transition from logistic differences to RW differences. If NULL, defaults to 5 steps
+#'
+#' @export
+prepare_rhybrid_lf <- function(params,
+                               ts_epidemic_start = 1975.5,
+                               rw_start = params$rw_start,
+                               rw_trans = params$rw_trans,
+                               rw_dk = params$rw_dk) {
+
+  if(is.null(rw_start)) {
+    rw_start <- 2003
+  }
+
+  if(is.null(rw_trans)) {
+    rw_trans <- 5
+  }
+
+  if(is.null(rw_dk)) {
+    rw_dk <- 5
+  }
+
+  params$ts_epidemic_start <- params$proj_steps[which.min(abs(params$proj_steps - ts_epidemic_start))]
+
+  rt <- list()
+
+  rt$proj_steps <- params$proj_steps
+
+  rt$rw_start <- rw_start
+  rt$rw_trans <- rw_trans
+
+  switch_idx <- max(which(params$proj_steps <= rw_start))
+  rt$rlogistic_steps <- params$proj_steps[1:switch_idx]
+  rt$rw_steps <- params$proj_steps[switch_idx:length(params$proj_steps)]
+
+  rt$n_rw <- ceiling((max(params$proj_steps) - rw_start) / rw_dk)
+  rt$rw_dk <- rw_dk
+  rt$rw_knots <- seq(rw_start, rw_start + rt$rw_dk * rt$n_rw, by = rt$rw_dk)
+  rt$rw_idx <- findInterval(rt$rw_steps[-1], rt$rw_knots)
+
+  rt$n_param <- 4 + rt$n_rw  # 4 parameters for rlogistic
+
+  ## Linearly interpolate between 0 and 1 over the period (rw_start, rw_start + rw_trans)
+  ## Add a small value to avoid R error in approx() if rw_trans = 0
+  rt$rw_transition <- stats::approx(c(rw_start, rw_start + rw_trans + 0.001), c(0, 1), rt$rw_steps[-1], rule = 2)$y
+
+  rt$dt <- 1 / params$ss$hiv_steps_per_year
+
+  rt$eppmod <- "rhybrid"
+  params$rt <- rt
+
+  if(is.null(params$eppmod)) {
+    params$eppmod <- "rhybrid"
+  }
+  params$iota <- NULL
+
+  params
+}
+
 create_rvec <- function(theta, rt){
   if(rt$eppmod == "rhybrid"){
 
@@ -120,8 +183,9 @@ create_rvec <- function(theta, rt){
 
     return(exp(rvec))
   }
-  else
+  else {
     stop(paste(rt$eppmod, "is not impmented in create_rvec()"))
+  }
 }
 
 
@@ -234,6 +298,14 @@ transf_iota <- function(par, fp){
     exp(invlogit(par)*diff(logiota.unif.prior) + logiota.unif.prior[1])
   else
     exp(par)
+}
+
+transf_iota_lf <- function(par, fp) {
+  if(!is.null(fp$logitiota) && fp$logitiota) {
+    exp(invlogit(par)  *diff(logiota.unif.prior) + logiota.unif.prior[1])
+  } else {
+    exp(par)
+  }
 }
 
 lprior_iota <- function(par, fp){

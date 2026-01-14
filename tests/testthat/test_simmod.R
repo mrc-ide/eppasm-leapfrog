@@ -1,6 +1,6 @@
 context("test model simulation")
 
-pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm")
+pjnz <- system_file("extdata/testpjnz", "Botswana2018.PJNZ")
 bw <- prepare_spec_fit(pjnz, proj.end=2022.5)
 
 bw_fp <- attr(bw$Urban, "specfp")
@@ -32,7 +32,7 @@ test_that("model simulation returns correct prevalence", {
 })
 
 
-pjnz <- system.file("extdata/testpjnz", "Mozambique_Maputo_Cidade2018.PJNZ", package="eppasm")
+pjnz <- system_file("extdata/testpjnz", "Mozambique_Maputo_Cidade2018.PJNZ")
 mpm <- prepare_spec_fit(pjnz, proj.end=2021.5)
 
 mp_fp <- attr(mpm[[1]], "specfp")
@@ -63,7 +63,7 @@ test_that("Mozambique Maputo Cidade returns correct prevalence", {
   expect_equal(round(prev(simmod(mp_fp, VERSION="R"))[11:52], 5), mp_prev_mod)
 })
 
-nl_fp <- prepare_directincid(system.file("extdata/testpjnz", "Netherlands2017.PJNZ", package="eppasm"))
+nl_fp <- prepare_directincid(system_file("extdata/testpjnz", "Netherlands2017.PJNZ"))
 
 hivpop_mod <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 38.60468, 276.39310, 828.50028,
                 1715.87826, 2865.02340, 4113.45910, 5269.59086, 6196.00968,
@@ -96,4 +96,21 @@ test_that("pop and hivpop+artpop are synchronised", {
                colSums(attr(mod, "hivpop"),,3) + colSums(attr(mod, "artpop"),,4))
   expect_equal(colSums(modR[,,2,],,2),
                colSums(attr(modR, "hivpop"),,3) + colSums(attr(modR, "artpop"),,4))
+})
+
+test_that("can call simmod with leapfrog data", {
+  pjnz <- system_file("extdata/testpjnz", "Mozambique_Maputo_Cidade2018.PJNZ")
+  inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
+  inputs$proj_years <- 49
+  eppd <- prep_epp_data(pjnz)
+  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]], eppmod = "rhybrid")
+
+  fp <- modifyList(prep$fp, fnCreateParam_lf(theta_rhybrid, prep$fp))
+
+  sim <- simmod_lf(fp)
+
+  # TODO: write better checks here
+  expect_s3_class(sim, "spec")
+  expect_equal(dim(sim), c(66, 2, 2, 49))
+  expect_true(any(attr(sim, "hivpop") > 0))
 })

@@ -1,6 +1,6 @@
 context("test log likelihood")
 
-pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package = "eppasm")
+pjnz <- system_file("extdata", "testpjnz", "Botswana2018.PJNZ")
 inputs <- prepare_spec_fit(pjnz, 2022.5)
 fp <- attr(inputs$Urban, "specfp")
 likdat <- prepare_likdat(attr(inputs$Urban, "eppd"), fp)

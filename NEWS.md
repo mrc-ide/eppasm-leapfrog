@@ -155,7 +155,7 @@ The function `create_spectrum_fixpar(..., projection_period = "calendar")` has n
 
 * Distribute age incidence rate ratio using **current** year HIV population by time step, instead of previous year HIV population to match Spectrum calculation. 
   - Calculation of incidence rate by sex uses **previous** year HIV negative population
-  - Thanks Rob Glaubius for debugging: https://github.com/mrc-ide/leapfrog/issues/18
+  - Thanks Rob Glaubius for debugging: https://github.com/mrc-ide/leaptfrog/issues/18
 
 ## eppasm 0.6.1
 
