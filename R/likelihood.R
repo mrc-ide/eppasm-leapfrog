@@ -219,6 +219,42 @@ ll_ancsite <- function(mod, fp, coef=c(0, 0), vinfl=0, dat){
   log(anclik::anc_resid_lik(d.lst, v.lst))
 }
 
+ll_ancsite_lf <- function(mod, fp, coef = c(0, 0), vinfl = 0, dat) {
+
+  df <- dat$df
+
+  if (!nrow(df)) {
+    return(0)
+  }
+
+  pregprevM <- agepregprev_lf(mod, fp, dat$datgrp$aidx, dat$datgrp$yidx, dat$datgrp$agspan)
+
+  ## If calendar year projection, average current and previous year prevalence to
+  ## approximate mid-year prevalence.
+  ## NOTE: This will be inefficient if values for every year because it duplicates
+  ##   prevalence calculation for the same year.
+
+  if (fp$projection_period == "calendar") {
+    pregprevM_last <- agepregprev_lf(mod, fp, dat$datgrp$aidx, dat$datgrp$yidx-1L, dat$datgrp$agspan)
+    pregprevM <- 0.5 * (pregprevM + pregprevM_last)
+  }
+
+  qM <- suppressWarnings(stats::qnorm(pregprevM))
+
+  if(any(is.na(qM)) || any(qM == -Inf) || any(qM > 2)) {  ## prev < 0.977
+    return(-Inf)
+  }
+
+  mu <- qM[df$qMidx] + dat$Xancsite %*% coef
+  d <- df$W - mu
+  v <- df$v + vinfl
+
+  d_lst <- lapply(dat$df_idx_lst, function(idx) d[idx])
+  v_lst <- lapply(dat$df_idx_lst, function(idx) v[idx])
+
+  log(anclik::anc_resid_lik(d_lst, v_lst))
+}
+
 
 #############################################
 ####                                     ####
@@ -301,6 +337,39 @@ ll_ancrtcens <- function(mod, dat, fp, pointwise = FALSE){
 
   if(pointwise)
     return(val)
+
+  sum(val)
+}
+
+#' @export
+ll_ancrtcens_lf <- function(mod, dat, fp, pointwise = FALSE) {
+  if (!nrow(dat)) {
+    return(0)
+  }
+
+  qM_prev <- agepregprev_lf(mod, fp, dat$aidx, dat$yidx, dat$agspan)
+
+  ## If calendar year projection, average current and previous year prevalence to
+  ## approximate mid-year prevalence.
+  ## NOTE: This will be inefficient if values for every year because it duplicates
+  ##   prevalence calculation for the same year.
+
+  if (fp$projection_period == "calendar") {
+    qM_prev_last <- qM_prev <- agepregprev_lf(mod, fp, dat$aidx, dat$yidx - 1L, dat$agspan)
+    qM_prev <- 0.5 * (qM_prev + qM_prev_last)
+  }
+
+  qM_prev <- suppressWarnings(stats::qnorm(qM_prev))
+
+  if (any(is.na(qM_prev))) {
+    val <- rep(-Inf, nrow(dat))
+  } else {
+    val <- stats::dnorm(dat$w_ancrt, qM_prev, sqrt(dat$v_ancrt + fp$ancrtcens_vinfl), log=TRUE)
+  }
+
+  if (pointwise) {
+    return(val)
+  }
 
   sum(val)
 }
@@ -478,7 +547,7 @@ fnCreateParam_lf <- function(theta, fp) {
       paramcurr <- paramcurr+1
     }
   }
-  if(exists("ancrt", fp) && fp$ancrt %in% c("site", "both")){
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("site", "both")) {
     param$ancrtsite_beta <- theta[paramcurr+1]
     paramcurr <- paramcurr+1
   }
@@ -564,7 +633,7 @@ prepare_hhsageprev_likdat_lf <- function(hhsage, params) {
 
 #' Log likelihood for age-specific household survey prevalence
 #' @export
-ll_hhsage <- function(mod, fp, dat, pointwise = FALSE){
+ll_hhsage <- function(mod, fp, dat, pointwise = FALSE) {
 
   prevM.age <- ageprev(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx, agspan = dat$agspan)
   ## If calendar year projection, average current and previous year prevalence to
@@ -583,6 +652,32 @@ ll_hhsage <- function(mod, fp, dat, pointwise = FALSE){
 
   if(pointwise)
     return(val)
+  sum(val)
+}
+
+#' Log likelihood for age-specific household survey prevalence
+#' @export
+ll_hhsage_lf <- function(mod, fp, dat, pointwise = FALSE) {
+
+  prevM_age <- ageprev(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx, agspan = dat$agspan)
+  ## If calendar year projection, average current and previous year prevalence to
+  ## approximate mid-year prevalence
+  if (fp$projection_period == "calendar") {
+    prevM_age_last <- ageprev(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx-1L, agspan = dat$agspan)
+    prevM_age <- 0.5 * (prevM_age + prevM_age_last)
+  }
+
+  qM_age <- suppressWarnings(stats::qnorm(prevM_age))
+
+  if (any(is.na(qM_age))) {
+    val <- rep(-Inf, nrow(dat))
+  } else {
+    val <- stats::dnorm(dat$w_hhs, qM_age, dat$sd_w_hhs, log=TRUE)
+  }
+
+  if (pointwise) {
+    return(val)
+  }
   sum(val)
 }
 
@@ -669,7 +764,7 @@ prepare_hhsartcov_likdat_lf <- function(hhsartcov, params) {
 
 
 #' Log likelihood for age-specific household survey prevalence
-ll_hhsartcov <- function(mod, fp, dat, pointwise = FALSE){
+ll_hhsartcov <- function(mod, fp, dat, pointwise = FALSE) {
 
   artcovM <- artcov15to49(mod)
   artcovM_obs <- artcovM[dat$yidx]
@@ -689,6 +784,32 @@ ll_hhsartcov <- function(mod, fp, dat, pointwise = FALSE){
 
   if(pointwise)
     return(val)
+  sum(val)
+}
+
+#' Log likelihood for age-specific household survey prevalence
+ll_hhsartcov_lf <- function(mod, fp, dat, pointwise = FALSE){
+
+  artcovM <- artcov15to49(mod)
+  artcovM_obs <- artcovM[dat$yidx]
+
+  ## If calendar year projection, average current and previous year
+  ## to approximate mid-year prevalence
+  if (fp$projection_period == "calendar") {
+    artcovM_obs <- 0.5 * (artcovM_obs + artcovM[dat$yidx - 1L])
+  }
+
+  qM <- stats::qnorm(artcovM_obs)
+
+  if (any(is.na(qM))) {
+    val <- rep(-Inf, nrow(dat))
+  } else {
+    val <- stats::dnorm(dat$W_hhs, qM, dat$sd_W_hhs, log=TRUE)
+  }
+
+  if (pointwise) {
+    return(val)
+  }
   sum(val)
 }
 
@@ -892,6 +1013,75 @@ lprior <- function(theta, fp){
 
 
 #' @export
+lprior_lf <- function(theta, fp) {
+
+  if (fp$eppmod %in% c("rspline", "logrw")) {
+    epp_nparam <- fp$num_knots + 1
+
+    nk <- fp$num_knots
+
+    if (fp$eppmod == "logrw") {
+      lpr <- bayes_lmvt(theta[2:fp$num_knots], rw_prior_shape, rw_prior_rate)
+    } else {
+      lpr <- bayes_lmvt(theta[(1 + fp$rtpenord):nk], tau2_prior_shape, tau2_prior_rate)
+    }
+
+    if (exists("r0logiotaratio", fp) && fp$r0logiotaratio) {
+      lpr <- lpr + stats::dunif(theta[nk + 1], r0logiotaratio.unif.prior[1], r0logiotaratio.unif.prior[2], log = TRUE)
+    } else {
+      lpr <- lpr + lprior_iota_lf(theta[nk + 1], fp)
+    }
+  } else if (fp$eppmod == "rlogistic") {
+    epp_nparam <- 5
+    lpr <- sum(stats::dnorm(theta[1:4], rlog_pr_mean, rlog_pr_sd, log=TRUE))
+    lpr <- lpr + lprior_iota_lf(theta[5], fp)
+  } else if (fp$eppmod == "rtrend") { # rtrend
+
+    epp_nparam <- 7
+
+    lpr <- stats::dunif(round(theta[1]), t0.unif.prior[1], t0.unif.prior[2], log=TRUE) +
+      stats::dnorm(round(theta[2]), t1.pr.mean, t1.pr.sd, log=TRUE) +
+      stats::dnorm(theta[3], logr0.pr.mean, logr0.pr.sd, log=TRUE) +
+      sum(stats::dnorm(theta[4:7], rtrend.beta.pr.mean, rtrend.beta.pr.sd, log=TRUE))
+  } else if (fp$eppmod == "rhybrid") {
+    epp_nparam <- fp$rt$n_param + 1
+    lpr <- sum(stats::dnorm(theta[1:4], rlog_pr_mean, rlog_pr_sd, log=TRUE)) +
+      sum(stats::dnorm(theta[4+1:fp$rt$n_rw], 0, rw_prior_sd, log=TRUE))
+    lpr <- lpr + lprior_iota_lf(theta[fp$rt$n_param+1], fp)
+  }
+
+  if (fp$ancsitedata) {
+    lpr <- lpr + stats::dnorm(theta[epp_nparam+1], ancbias.pr.mean, ancbias.pr.sd, log=TRUE)
+    if (is.null(fp$v_infl)) {
+      anclik_nparam <- 2
+      lpr <- lpr + stats::dexp(exp(theta[epp_nparam + 2]), vinfl.prior.rate, TRUE) + theta[epp_nparam + 2]         # additional ANC variance
+    } else {
+      anclik_nparam <- 1
+    }
+  } else {
+    anclik_nparam <- 0
+  }
+
+  paramcurr <- epp_nparam + anclik_nparam
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("census", "both")) {
+    lpr <- lpr + stats::dnorm(theta[paramcurr + 1], log_frr_adjust.pr.mean, log_frr_adjust.pr.sd, log=TRUE)
+    if(!exists("ancrtcens.vinfl", fp)){
+      lpr <- lpr + stats::dexp(exp(theta[paramcurr + 2]), ancrtcens.vinfl.pr.rate, TRUE) + theta[paramcurr + 2]
+      paramcurr <- paramcurr + 2
+    } else {
+      paramcurr <- paramcurr + 1
+    }
+  }
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("site", "both")) {
+    lpr <- lpr + stats::dnorm(theta[paramcurr+1], ancrtsite.beta.pr.mean, ancrtsite.beta.pr.sd, log=TRUE)
+    paramcurr <- paramcurr + 1
+  }
+
+  lpr
+}
+
+
+#' @export
 ll <- function(theta, fp, likdat){
   theta.last <<- theta
   fp <- stats::update(fp, list=fnCreateParam(theta, fp))
@@ -968,6 +1158,93 @@ ll <- function(theta, fp, likdat){
     incid  = ll.incid,
     artcov = ll.hhsartcov,
     rprior = ll.rprior)
+}
+
+#' @export
+ll_lf <- function(theta, fp, likdat) {
+  fp <- modifyList(fp, fnCreateParam_lf(theta, fp))
+
+  if (fp$eppmod == "rspline") {
+    if (any(is.na(fp$rvec)) || min(fp$rvec) < 0 || max(fp$rvec) > 20) {
+      return(-Inf)
+    }
+  }
+
+  mod <- simmod_lf(fp)
+
+  ## ANC likelihood
+  if (!is.null(likdat$ancsite_dat)) {
+    ll_anc <- ll_ancsite_lf(mod, fp, coef=c(fp$ancbias, fp$ancrtsite_beta), vinfl=fp$v_infl, likdat$ancsite_dat)
+  } else {
+    ll_anc <- 0
+  }
+
+  if (!is.null(likdat$ancrtcens_dat)) {
+    ll_ancrt <- ll_ancrtcens_lf(mod, likdat$ancrtcens_dat, fp)
+  } else {
+    ll_ancrt <- 0
+  }
+
+
+  ## Household survey likelihood
+  if (!is.null(likdat$hhs_dat)) {
+    if (!is.null(fp$ageprev) && fp$ageprev=="binom") {
+      ll_hhs <- ll_hhsage_binom(mod, fp, likdat$hhs_dat)
+    } else { ## use probit likelihood
+      ll_hhs <- ll_hhsage_lf(mod, fp, likdat$hhs_dat) # probit-transformed model
+    }
+  } else {
+    ll_hhs <- 0
+  }
+
+  if (!is.null(likdat$hhsincid.dat)) {
+    ll_incid <- ll_hhsincid(mod, fp, likdat$hhsincid_dat)
+  } else {
+    ll_incid <- 0
+  }
+
+  if (!is.null(likdat$hhsartcov_dat)) {
+    ll_hhsartcov <- ll_hhsartcov_lf(mod, fp, likdat$hhsartcov_dat)
+  } else {
+    ll_hhsartcov <- 0
+  }
+
+
+  if (!is.null(fp$equil_rprior) && fp$equil_rprior) {
+    if (fp$eppmod != "rspline") {
+      stop("error in ll(): equil.rprior is only for use with r-spline model")
+    }
+
+    lastdata_idx <- max(likdat$ancsite_dat$df$yidx,
+                        likdat$hhs_dat$yidx,
+                        likdat$ancrtcens_dat$yidx,
+                        likdat$hhsincid_dat$idx)
+
+    qM_all <- suppressWarnings(stats::qnorm(prev(mod)))
+
+    if (any(is.na(qM_all[lastdata_idx - 9:0]))) {
+      ll.rprior <- -Inf
+    } else {
+      rvec_ann <- fp$rvec[fp$proj_steps %% 1 == 0.5]
+      equil_rprior_mean <- epp:::muSS/(1 - stats::pnorm(qM_all[lastdata_idx]))
+      if (!is.null(fp$prior_args$equil_rprior_sd)) {
+        equil_rprior_sd <- fp$prior_args$equil_rprior_sd
+      } else {
+        equil_rprior_sd <- sqrt(mean((epp:::muSS/(1 - stats::pnorm(qM_all[lastdata_idx - 9:0])) - rvec_ann[lastdata_idx - 9:0])^2))  # empirical sd based on 10 previous years
+      }
+
+      ll_rprior <- sum(stats::dnorm(rvec_ann[(lastdata_idx+1L):length(qM_all)], equil_rprior_mean, equil_rprior_sd, log=TRUE))  # prior starts year after last data
+    }
+  } else {
+    ll_rprior <- 0
+  }
+
+  c(anc    = ll_anc,
+    ancrt  = ll_ancrt,
+    hhs    = ll_hhs,
+    incid  = ll_incid,
+    artcov = ll_hhsartcov,
+    rprior = ll_rprior)
 }
 
 
@@ -1074,6 +1351,109 @@ sample.prior <- function(n, fp){
   return(mat)
 }
 
+sample_prior_lf <- function(n, fp) {
+
+  ## Calculate number of parameters
+  if (fp$eppmod %in% c("rspline", "logrw")) {
+    epp_nparam <- fp$num_knots + 1L
+  } else if (fp$eppmod == "rlogistic") {
+    epp_nparam <- 5
+  } else if (fp$eppmod == "rtrend") {
+    epp_nparam <- 7
+  } else if (fp$eppmod == "rhybrid") {
+    epp_nparam <- fp$rt$n_param + 1
+  }
+
+  if (fp$ancsitedata) {
+    if (is.null(fp$v_infl)) {
+      anclik_nparam <- 2
+    } else {
+      anclik_nparam <- 1
+    }
+  } else {
+    anclik_nparam <- 0
+  }
+
+  if (exists("ancrt", fp) && fp$ancrt == "both") {
+    ancrt_nparam <- 2
+  } else if (exists("ancrt", fp) && fp$ancrt == "census") {
+    ancrt_nparam <- 1
+  } else if (exists("ancrt", fp) && fp$ancrt == "site") {
+    ancrt_nparam <- 1
+  } else {
+    ancrt_nparam <- 0
+  }
+
+  if (exists("ancrt", fp) && fp$ancrt %in% c("census", "both") && is.null(fp$ancrtcens_vinfl)) {
+    ancrt_nparam <- ancrt_nparam + 1
+  }
+
+  nparam <- epp_nparam + anclik_nparam + ancrt_nparam
+
+  ## Create matrix for storing samples
+  mat <- matrix(NA, n, nparam)
+
+  if (fp$eppmod %in% c("rspline", "logrw")) {
+    epp_nparam <- fp$num_knots + 1
+
+    if (fp$eppmod == "rspline") {
+      mat[, 1] <- stats::rnorm(n, 1.5, 1)                                                   # u[1]
+    } else { # logrw
+      mat[, 1] <- stats::rnorm(n, 0.2, 1) # u[1]
+    }
+    if (fp$eppmod == "logrw") {
+      mat[, 2:fp$rt$n_rw] <- bayes_rmvt(n, fp$rt$n_rw - 1, rw_prior_shape, rw_prior_rate)  # u[2:num_knots]
+    } else {
+      mat[, 2:fp$num_knots] <- bayes_rmvt(n, fp$num_knots - 1,tau2_init_shape, tau2_init_rate)  # u[2:num_knots]
+    }
+
+    if (exists("r0logiotaratio", fp) && fp$r0logiotaratio) {
+      mat[, fp$num_knots + 1] <-  stats::runif(n, r0logiotaratio.unif.prior[1], r0logiotaratio.unif.prior[2])  # ratio r0 / log(iota)
+    } else {
+      mat[, fp$num_knots + 1] <- sample_iota_lf(n, fp)
+    }
+  } else if (fp$eppmod == "rlogistic") {
+    mat[, 1:4] <- t(matrix(stats::rnorm(4*n, rlog_pr_mean, rlog_pr_sd), 4))
+    mat[, 5] <- sample_iota_lf(n, fp)
+  } else if (fp$eppmod == "rtrend") { # r-trend
+
+    mat[, 1] <- stats::runif(n, t0.unif.prior[1], t0.unif.prior[2])           # t0
+    mat[, 2] <- stats::rnorm(n, t1.pr.mean, t1.pr.sd)
+    mat[, 3] <- stats::rnorm(n, logr0.pr.mean, logr0.pr.sd)  # r0
+    mat[, 4:7] <- t(matrix(stats::rnorm(4 * n, rtrend.beta.pr.mean, rtrend.beta.pr.sd), 4, n))  # beta
+  } else if (fp$eppmod == "rhybrid") {
+    mat[, 1:4] <- t(matrix(stats::rnorm(4 * n, rlog_pr_mean, rlog_pr_sd), 4))
+    mat[, 4 + 1:fp$rt$n_rw] <- stats::rnorm(n*fp$rt$n_rw, 0, rw_prior_sd)  # u[2:numKnots]
+    mat[, fp$rt$n_param + 1] <- sample_iota_lf(n, fp)
+  }
+
+  ## sample ANC bias paramters
+  if (fp$ancsitedata) {
+    mat[, epp_nparam + 1] <- stats::rnorm(n, ancbias.pr.mean, ancbias.pr.sd)   # ancbias parameter
+    if(is.null(fp$v_infl)) {
+      mat[, epp_nparam + 2] <- log(stats::rexp(n, vinfl.prior.rate))
+    }
+  }
+
+  ## sample ANCRT parameters
+  paramcurr <- epp_nparam + anclik_nparam
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("census", "both")) {
+    mat[, paramcurr + 1] <- stats::rnorm(n, log_frr_adjust.pr.mean, log_frr_adjust.pr.sd)
+    if (is.null(fp$ancrtcens_vinfl)) {
+      mat[,paramcurr + 2] <- log(stats::rexp(n, ancrtcens.vinfl.pr.rate))
+      paramcurr <- paramcurr + 2
+    } else {
+      paramcurr <- paramcurr + 1
+    }
+  }
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("site", "both")) {
+    mat[, paramcurr + 1] <- stats::rnorm(n, ancrtsite.beta.pr.mean, ancrtsite.beta.pr.sd)
+    paramcurr <- paramcurr + 1
+  }
+
+  mat
+}
+
 ldsamp <- function(theta, fp){
 
   if(exists("prior_args", where = fp)){
@@ -1160,7 +1540,20 @@ prior <- function(theta, fp, log=FALSE){
     return(exp(lval))
 }
 
-likelihood <- function(theta, fp, likdat, log=FALSE){
+prior_lf <- function(theta, fp, log = FALSE){
+  if (is.vector(theta)) {
+    lval <- lprior_lf(theta, fp)
+  } else {
+    lval <- unlist(lapply(seq_len(nrow(theta)), function(i) (lprior_lf(theta[i,], fp))))
+  }
+  if (log) {
+    return(lval)
+  } else {
+    return(exp(lval))
+  }
+}
+
+likelihood <- function(theta, fp, likdat, log= FALSE){
   if(is.vector(theta))
     lval <- sum(ll(theta, fp, likdat))
   else
@@ -1169,6 +1562,20 @@ likelihood <- function(theta, fp, likdat, log=FALSE){
     return(lval)
   else
     return(exp(lval))
+}
+
+likelihood_lf <- function(theta, fp, likdat, log = FALSE) {
+  if (is.vector(theta)) {
+    lval <- sum(ll_lf(theta, fp, likdat))
+  } else {
+    lval <- unlist(lapply(seq_len(nrow(theta)), function(i) sum(ll_lf(theta[i,], fp, likdat))))
+  }
+
+  if (log) {
+    return(lval)
+  } else {
+    return(exp(lval))
+  }
 }
 
 dsamp <- function(theta, fp, log=FALSE){

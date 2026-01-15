@@ -357,8 +357,6 @@ prepare_rspline_model_lf <- function(params, num_knots = 7, ts_epidemic_start = 
     params$num_knots <- num_knots
   }
 
-  # TODO: do we need ts_epidemic_start here?
-  # TODO: separate out params and fitting params like rvec_spldes?
   params$ts_epidemic_start <- params$proj_steps[which.min(abs(params$proj_steps - ts_epidemic_start))]
   epi_steps <- params$proj_steps[params$proj_steps >= params$ts_epidemic_start]
   proj_dur <- diff(range(epi_steps))
@@ -702,6 +700,58 @@ agepregprev <- function(mod, fp,
   ## Calculate age-specific FRR given the CD4 and ART duration distribution
   hivpop_fert <- attr(mod, "hivpop")[ , fp$ss$h.fert.idx, fp$ss$f.idx, ]
   artpop_fert <- attr(mod, "artpop")[ , , fp$ss$h.fert.idx, fp$ss$f.idx, ]
+  ha_frr <- (colSums(hivpop_fert * fp$frr_cd4) + colSums(artpop_fert * fp$frr_art,,2)) / (colSums(hivpop_fert) + colSums(artpop_fert,,2))
+
+  births_a <- fp$asfr[cbind(fert_idx, y_idx)] * (hivn + hivp)
+  pregprev_a <- 1 - hivn / (hivn + ha_frr[cbind(hfert_idx, y_idx)] * hivp)
+
+  fastmatch::ctapply(pregprev_a * births_a, id_idx, sum) / fastmatch::ctapply(births_a, id_idx, sum)
+}
+
+#' Age-specific prevalence among pregnant women
+#'
+#' @param mod todo
+#' @param fp Leapfrog fixed parameters
+#' @param expand whether to expand aidx, yidx, sidx, and agspan
+#'
+#' @export
+agepregprev_lf <- function(mod, fp,
+                           aidx = 3:9 * 5 - fp$ss$AGE_START + 1L,
+                           yidx = 1:fp$proj_years,
+                           agspan = 5,
+                           expand = FALSE) {
+  sidx <- fp$ss$f_idx # only women get pregnant
+
+  if(length(agspan) == 1) {
+    agspan <- rep(agspan, length(aidx))
+  }
+
+  if (expand) {
+    idx <- expand.grid(aidx = aidx, sidx = sidx, yidx = yidx)
+    idx$agspan <- rep(agspan, times=length(sidx) * length(yidx))
+  } else {
+    idx <- data.frame(aidx = aidx, sidx = sidx, yidx = yidx, agspan = agspan)
+  }
+
+  idx$id <- seq_len(nrow(idx))
+
+  increment <- unlist(lapply(idx$agspan, seq_len))-1
+  a_idx <- rep(idx$aidx, idx$agspan) + increment
+  s_idx <- rep(idx$sidx, idx$agspan)
+  y_idx <- rep(idx$yidx, idx$agspan)
+  yminus1_idx <- rep(pmax(idx$yidx - 1, 1), idx$agspan)
+  id_idx <- rep(idx$id, idx$agspan)
+
+  ## get index in asfr and ha_frr array
+  fert_idx <- match(a_idx, fp$ss$p_fert_idx)
+  hfert_idx <- match(fp$ss$ag_idx[a_idx], fp$ss$h_fert_idx)
+
+  hivp <- (mod[cbind(a_idx, s_idx, 2, y_idx)] + mod[cbind(a_idx, s_idx, 2, yminus1_idx)]) / 2
+  hivn <- (mod[cbind(a_idx, s_idx, 1, y_idx)] + mod[cbind(a_idx, s_idx, 1, yminus1_idx)]) / 2
+
+  ## Calculate age-specific FRR given the CD4 and ART duration distribution
+  hivpop_fert <- attr(mod, "hivpop")[ , fp$ss$h_fert_idx, fp$ss$f_idx, ]
+  artpop_fert <- attr(mod, "artpop")[ , , fp$ss$h_fert_idx, fp$ss$f_idx, ]
   ha_frr <- (colSums(hivpop_fert * fp$frr_cd4) + colSums(artpop_fert * fp$frr_art,,2)) / (colSums(hivpop_fert) + colSums(artpop_fert,,2))
 
   births_a <- fp$asfr[cbind(fert_idx, y_idx)] * (hivn + hivp)

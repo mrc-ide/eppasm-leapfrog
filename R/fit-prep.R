@@ -88,17 +88,49 @@ prep_fp_fitmod_lf <- function(params, eppd, epp_t0, ...) {
 
   params <- modifyList(params, list(...))
 
+  # Get number of years of projection from input data. Using survival rate
+  # for this but it could be any of the inputs.
+  # proj_years is how many years of input data we have
+  # sim_years is how long the simulation will run, when fitting with
+  # transmission input (i.e. not direct incidence) sim_years may be
+  # less than number of proj_years. In this case, we simulate for sim_years
+  # and then project forward to fill in up to proj_years.
+  params$proj_years <- as.integer(dim(params$Sx)[length(dim(params$Sx))])
+  params$sim_years <- params$proj_years
+  params$projection_end_year <- params$projection_start_year + params$proj_years - 1
   ## TODO: Get hiv steps per year and age start from leapfrog state space
   hiv_steps_per_year <- 10
   params$ss$hiv_steps_per_year <- hiv_steps_per_year
-  params$ss$AGE_START <- 15
-  params$sim_years <- params$proj_years
   params$proj_steps <- get_projection_steps(params)
+  params$ss$AGE_START <- 15
+  params$ss$f_idx <- 2 # Index to use for women
+  params$ss$p_fert_idx <- 16:50 - params$ss$AGE_START
+  params$ss$h_ag_span <- as.integer(c(2,3, rep(5, 6), 31))
+  params$ss$hAG <- length(params$ss$h_ag_span)
+  params$ss$ag_idx <- rep(1:params$ss$hAG, params$ss$h_ag_span)
+  params$ss$h_fert_idx <- which((params$ss$AGE_START - 1 + cumsum(params$ss$h_ag_span)) %in% 15:49)
+
+  hDS <- 7
+  hTS <- 3
+
+  # TODO: Can we get frr_cd4 or frr_art anywhere from leapfrog? Or do we need
+  # to calculate them here. They are required for likelihood calculations.
+  frr_agecat <- dimnames(params$hivtfr)[[1]]
+  frr_agecat_start <- vapply(strsplit(frr_agecat, "-"), function(x) as.integer(x[1]), integer(1))
+  fert_rat_h_ag <- findInterval(params$ss$AGE_START + cumsum(params$ss$h_ag_span[params$ss$h_fert_idx]) - params$ss$h_ag_span[params$ss$h_fert_idx], frr_agecat_start)
+
+  params$frr_cd4 <- array(1, c(hDS, length(params$ss$h_fert_idx), params$proj_years))
+  params$frr_cd4[,,] <- rep(params$hivtfr[fert_rat_h_ag, as.character(params$projection_start_year:params$projection_end_year)], each=hDS)
+  params$frr_cd4 <- sweep(params$frr_cd4, 1, params$cd4fert_rat, "*")
+  params$frr_cd4 <- params$frr_cd4 * params$frr_scalar
+
+  params$frr_art <- array(1.0, c(hTS, hDS, length(params$ss$h_fert_idx), params$proj_years))
+  params$frr_art[1,,,] <- params$frr_cd4 # 0-6 months
+  params$frr_art[2:hTS, , , ] <- sweep(params$frr_art[2:hTS, , , ], 3, params$frr_art6mos[fert_rat_h_ag] * params$frr_scalar, "*") # 6-12mos, >1 years
 
   has_ancrtsite <- exists("ancsitedat", eppd) && any(eppd$ancsitedat$type == "ancrt")
   has_ancrtcens <- !is.null(eppd$ancrtcens) && (nrow(eppd$ancrtcens) > 0)
 
-  ## TODO: rename
   if (!has_ancrtsite) {
     params$ancrtsite_beta <- 0
   }
@@ -116,7 +148,7 @@ prep_fp_fitmod_lf <- function(params, eppd, epp_t0, ...) {
   likdat <- prepare_likdat_lf(params, eppd)
   params$ancsitedata <- as.logical(nrow(likdat$ancsite_dat$df))
 
-  if(params$eppmod %in% c("logrw", "rhybrid")) {
+  if (params$eppmod %in% c("logrw", "rhybrid")) {
 
     params$sim_years <- as.integer(max(likdat$ancsite_dat$df$yidx,
                                        likdat$hhs_dat$yidx,

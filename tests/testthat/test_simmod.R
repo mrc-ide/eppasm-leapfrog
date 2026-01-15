@@ -101,7 +101,6 @@ test_that("pop and hivpop+artpop are synchronised", {
 test_that("can call simmod with leapfrog data", {
   pjnz <- system_file("extdata/testpjnz", "Mozambique_Maputo_Cidade2018.PJNZ")
   inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
-  inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
   epp_t0 <- read_epp_t0(pjnz)
   prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
@@ -114,6 +113,6 @@ test_that("can call simmod with leapfrog data", {
 
   # TODO: write better checks here
   expect_s3_class(sim, "spec")
-  expect_equal(dim(sim), c(66, 2, 2, 49))
+  expect_equal(dim(sim), c(66, 2, 2, 52))
   expect_true(any(attr(sim, "hivpop") > 0))
 })

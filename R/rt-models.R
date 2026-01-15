@@ -302,7 +302,7 @@ transf_iota <- function(par, fp){
 
 transf_iota_lf <- function(par, fp) {
   if(!is.null(fp$logitiota) && fp$logitiota) {
-    exp(invlogit(par)  *diff(logiota.unif.prior) + logiota.unif.prior[1])
+    exp(invlogit(par) * diff(logiota.unif.prior) + logiota.unif.prior[1])
   } else {
     exp(par)
   }
@@ -322,6 +322,15 @@ lprior_iota <- function(par, fp){
     stats::dunif(par, logiota.unif.prior[1], logiota.unif.prior[2], log=TRUE)
 }
 
+lprior_iota_lf <- function(par, fp){
+  if(!is.null(fp$logitiota) && fp$logitiota) {
+    ldinvlogit(par)  # Note: parameter is defined on range logiota.unif.prior, so no need to check bound
+  }
+  else {
+    stats::dunif(par, logiota.unif.prior[1], logiota.unif.prior[2], log = TRUE)
+  }
+}
+
 sample_iota <- function(n, fp){
   if(exists("prior_args", where = fp)){
     for(i in seq_along(fp$prior_args))
@@ -331,6 +340,14 @@ sample_iota <- function(n, fp){
     return(logit(stats::runif(n)))
   else
     stats::runif(n, logiota.unif.prior[1], logiota.unif.prior[2])
+}
+
+sample_iota_lf <- function(n, fp){
+  if (!is.null(fp$logitiota) && fp$logitiota) {
+    return(logit(stats::runif(n)))
+  } else {
+    stats::runif(n, logiota.unif.prior[1], logiota.unif.prior[2])
+  }
 }
 
 ldsamp_iota <- lprior_iota
