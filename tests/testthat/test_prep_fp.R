@@ -36,6 +36,7 @@ test_that("can prep leapfrog inputs for rspline model", {
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
   epp_t0 <- read_epp_t0(pjnz)
+
   prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
                             epp_t0["Maputo Cidade"],
                             eppmod = "rspline")
@@ -67,6 +68,7 @@ test_that("can prep leapfrog inputs for rlogistic model", {
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
   epp_t0 <- read_epp_t0(pjnz)
+
   prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
                             epp_t0["Maputo Cidade"],
                             eppmod = "rlogistic")
