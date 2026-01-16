@@ -3,7 +3,10 @@ test_that("can prep leapfrog inputs for rhybrid model", {
   inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
-  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]], eppmod = "rhybrid")
+  epp_t0 <- read_epp_t0(pjnz)
+  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
+                            epp_t0["Maputo Cidade"],
+                            eppmod = "rhybrid")
 
   # TODO: What to test here?
   expect_equal(prep$fp$eppmod, "rhybrid")
@@ -32,7 +35,10 @@ test_that("can prep leapfrog inputs for rspline model", {
   inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
-  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]], eppmod = "rspline")
+  epp_t0 <- read_epp_t0(pjnz)
+  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
+                            epp_t0["Maputo Cidade"],
+                            eppmod = "rspline")
 
   # TODO: What to test here?
   expect_equal(prep$fp$eppmod, "rspline")
@@ -60,7 +66,10 @@ test_that("can prep leapfrog inputs for rlogistic model", {
   inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
-  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]], eppmod = "rlogistic")
+  epp_t0 <- read_epp_t0(pjnz)
+  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
+                            epp_t0["Maputo Cidade"],
+                            eppmod = "rlogistic")
 
   # TODO: What to test here?
   expect_equal(prep$fp$eppmod, "rlogistic")
@@ -76,7 +85,7 @@ test_that("can prep leapfrog inputs for rlogistic model", {
   expect_equal(names(prep$likdat), c("hhs_dat", "ancsite_dat", "ancrtcens_dat"))
 
   # Test fit params
-  expect_equal(prep$fp$ts_epidemic_start, 1975)
+  expect_equal(prep$fp$ts_epidemic_start, 1975.5)
 })
 
 bw_theta <- c(-0.407503322169364, -2.76794181367538, -1.26018073624346, 1995.96447776502,
@@ -89,7 +98,10 @@ test_that("can create rvec and iota for rhybrid model", {
   inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
-  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]], eppmod = "rhybrid")
+  epp_t0 <- read_epp_t0(pjnz)
+  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
+                            epp_t0["Maputo Cidade"],
+                            eppmod = "rhybrid")
 
   params <- fnCreateParam_lf(bw_theta, prep$fp)
 

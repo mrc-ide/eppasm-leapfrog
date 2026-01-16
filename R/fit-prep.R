@@ -84,7 +84,7 @@ prep_fp_fitmod <- function(obj, ..., epp = FALSE) {
 #' @returns List containing `fp` object ready for fitting and likelihood
 #'   data `likdat`
 #' @export
-prep_fp_fitmod_lf <- function(params, eppd, ...) {
+prep_fp_fitmod_lf <- function(params, eppd, epp_t0, ...) {
 
   params <- modifyList(params, list(...))
 
@@ -127,11 +127,9 @@ prep_fp_fitmod_lf <- function(params, eppd, ...) {
   }
 
   ## Prepare the EPP model
-  ## TODO: what should we do with ts_epidemic_start, this isn't really in leapfrog
-  ## just hardcoding for now
-  ts_epidemic_start <- 1975.5
+  params$ts_epidemic_start <- epp_t0 + 0.5
   if(params$eppmod == "rspline") {
-    fp <- prepare_rspline_model_lf(params, ts_epidemic_start = ts_epidemic_start)
+    fp <- prepare_rspline_model_lf(params, ts_epidemic_start = params$ts_epidemic_start)
   } else if(params$eppmod == "logrw") {
     stop("TODO impl logrw for leapfrog")
     fp <- prepare_logrw(params)
@@ -139,7 +137,7 @@ prep_fp_fitmod_lf <- function(params, eppd, ...) {
     fp <- prepare_rhybrid_lf(params)
   } else if(params$eppmod == "rlogistic") {
     fp <- params
-    fp$ts_epidemic_start <- params$proj_steps[which.min(abs(params$proj_steps - ts_epidemic_start + 0.5))]
+    fp$ts_epidemic_start <- params$proj_steps[which.min(abs(params$proj_steps - params$ts_epidemic_start))]
   }
 
   fp$logitiota <- TRUE

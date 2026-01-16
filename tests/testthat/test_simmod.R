@@ -103,7 +103,10 @@ test_that("can call simmod with leapfrog data", {
   inputs <- leapfrog::process_pjnz(pjnz, use_coarse_age_groups = TRUE)
   inputs$proj_years <- 49
   eppd <- prep_epp_data(pjnz)
-  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]], eppmod = "rhybrid")
+  epp_t0 <- read_epp_t0(pjnz)
+  prep <- prep_fp_fitmod_lf(inputs, eppd[["Maputo Cidade"]],
+                            epp_t0["Maputo Cidade"],
+                            eppmod = "rhybrid")
 
   fp <- modifyList(prep$fp, fnCreateParam_lf(theta_rhybrid, prep$fp))
 
