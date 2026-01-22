@@ -128,13 +128,12 @@ leapfrog_result_to_mod <- function(leapfrog_result, leapfrog_params) {
   n_ages <- length(AGE_1580PLUS_IDX)
   n_sex <- 2
 
-  mod <- list()
-  # the 3rd dimension is hiv negative, hiv +ve
-  mod$pop <- array(0, dim = c(n_ages, n_sex, 2, leapfrog_params$sim_years))
+  # Populate "mod", the 3rd dimension is hiv negative, hiv +ve
+  mod <- array(0, dim = c(n_ages, n_sex, 2, leapfrog_params$sim_years))
   hivneg_pop <- leapfrog_result$p_totpop - leapfrog_result$p_hivpop
-  mod$pop[,,1,] <- hivneg_pop[AGE_1580PLUS_IDX,, ]
-  mod$pop[,,2,] <- leapfrog_result$p_hivpop[AGE_1580PLUS_IDX,, ]
-  mod$pop <- pad_last_dim(mod, leapfrog_params$proj_years)
+  mod[,,1,] <- hivneg_pop[AGE_1580PLUS_IDX,, ]
+  mod[,,2,] <- leapfrog_result$p_hivpop[AGE_1580PLUS_IDX,, ]
+  mod <- pad_last_dim(mod, leapfrog_params$proj_years)
 
   # 15to49 prevalence
   hivpop_15to49 <- colSums(leapfrog_result$p_hivpop[AGE_15TO49_IDX,,], dims = 2)
@@ -152,17 +151,17 @@ leapfrog_result_to_mod <- function(leapfrog_result, leapfrog_params) {
   # Prevalence of HIV among pregnant women, hiv_births / births
   pregprev <- leapfrog_result$hiv_births / leapfrog_result$births
 
-  mod$hivpop <- leapfrog_result$h_hivpop
-  mod$artpop <- leapfrog_result$h_artpop
-  mod$infections <- leapfrog_result$p_infections[AGE_1580PLUS_IDX,,]
-  mod$hivdeaths <- leapfrog_result$p_hiv_deaths[AGE_1580PLUS_IDX,,]
-  mod$natdeaths <- leapfrog_result$p_deaths_background_hivpop[AGE_1580PLUS_IDX,,]
-  mod$excessnonaidsdeaths <- leapfrog_result$p_deaths_excess_nonaids[AGE_1580PLUS_IDX,,]
-  mod$aidsdeaths_noart <- leapfrog_result$h_hiv_deaths_no_art
-  mod$excessnonaidsdeaths_noart <- leapfrog_result$h_deaths_excess_nonaids_no_art
-  mod$aidsdeaths_art <- leapfrog_result$h_hiv_deaths_art
-  mod$excessnonaidsdeaths_art <- leapfrog_result$h_deaths_excess_nonaids_on_art
-  mod$artinit <- leapfrog_result$h_art_initiation
+  attr(mod, "hivpop") <- leapfrog_result$h_hivpop
+  attr(mod, "artpop") <- leapfrog_result$h_artpop
+  attr(mod, "infections") <- leapfrog_result$p_infections[AGE_1580PLUS_IDX,,]
+  attr(mod, "hivdeaths") <- leapfrog_result$p_hiv_deaths[AGE_1580PLUS_IDX,,]
+  attr(mod, "natdeaths") <- leapfrog_result$p_deaths_background_hivpop[AGE_1580PLUS_IDX,,]
+  attr(mod, "excessnonaidsdeaths") <- leapfrog_result$p_deaths_excess_nonaids[AGE_1580PLUS_IDX,,]
+  attr(mod, "aidsdeaths_noart") <- leapfrog_result$h_hiv_deaths_no_art
+  attr(mod, "excessnonaidsdeaths_noart") <- leapfrog_result$h_deaths_excess_nonaids_no_art
+  attr(mod, "aidsdeaths_art") <- leapfrog_result$h_hiv_deaths_art
+  attr(mod, "excessnonaidsdeaths_art") <- leapfrog_result$h_deaths_excess_nonaids_on_art
+  attr(mod, "artinit") <- leapfrog_result$h_art_initiation
   # For hiv time step outputs leapfrog includes for 0th year where
   # EPPASM only starts recording this at time 1. i.e. for a 1970 to 2030
   # projection. Leapfrog ouputs 61 (1970-2030) years for this, but
@@ -170,12 +169,12 @@ leapfrog_result_to_mod <- function(leapfrog_result, leapfrog_params) {
   # Remove the first 1 year of HIV time steps to get the expected length
   # Magic 10 for no of hiv time steps per year
   first_year_hts <- -1:-10
-  mod$incrate15to49_ts <- as.vector(leapfrog_result$incidence_15to49_hts)[first_year_hts]
-  mod$prev15to49_ts <- as.vector(leapfrog_result$prevalence_15to49_hts)[first_year_hts]
-  mod$rvec_ts <- as.vector(leapfrog_params$transmission_rate_hts)
-  mod$prev15to49 <- prev15to49
-  mod$pregprev <- pregprev
-  mod$incid15to49 <- incid15to49
+  attr(mod, "incrate15to49_ts") <- as.vector(leapfrog_result$incidence_15to49_hts)[first_year_hts]
+  attr(mod, "prev15to49_ts") <- as.vector(leapfrog_result$prevalence_15to49_hts)[first_year_hts]
+  attr(mod, "rvec_ts") <- as.vector(leapfrog_params$transmission_rate_hts)
+  attr(mod, "prev15to49") <- prev15to49
+  attr(mod, "pregprev") <- pregprev
+  attr(mod, "incid15to49") <- incid15to49
 
   # When running with transmission input i.e. not direct incidence EPPASM
   # will run the model for the years for which there is data and then project
@@ -188,11 +187,11 @@ leapfrog_result_to_mod <- function(leapfrog_result, leapfrog_params) {
                          "excessnonaidsdeaths_art", "artinit", "prev15to49",
                          "pregprev", "incid15to49")
   pad_to_hiv_time_steps <- c("incrate15to49_ts", "prev15to49_ts")
-  for (name in pad_to_proj_years) {
-    mod[[name]] <- pad_last_dim(mod[[name]], leapfrog_params$proj_years)
+  for (attr_name in pad_to_proj_years) {
+    attr(mod, attr_name) <- pad_last_dim(attr(mod, attr_name), leapfrog_params$proj_years)
   }
-  for (name in pad_to_hiv_time_steps) {
-    mod[[name]] <- pad_last_dim(mod[[name]], (leapfrog_params$proj_years - 1) * 10)
+  for (attr_name in pad_to_hiv_time_steps) {
+    attr(mod, attr_name) <- pad_last_dim(attr(mod, attr_name), (leapfrog_params$proj_years - 1) * 10)
   }
 
   class(mod) <- "spec"
