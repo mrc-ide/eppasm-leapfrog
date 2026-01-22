@@ -113,8 +113,6 @@ prep_fp_fitmod_lf <- function(params, eppd, epp_t0, ...) {
   hDS <- 7
   hTS <- 3
 
-  # TODO: Can we get frr_cd4 or frr_art anywhere from leapfrog? Or do we need
-  # to calculate them here. They are required for likelihood calculations.
   frr_agecat <- dimnames(params$hivtfr)[[1]]
   frr_agecat_start <- vapply(strsplit(frr_agecat, "-"), function(x) as.integer(x[1]), integer(1))
   fert_rat_h_ag <- findInterval(params$ss$AGE_START + cumsum(params$ss$h_ag_span[params$ss$h_fert_idx]) - params$ss$h_ag_span[params$ss$h_fert_idx], frr_agecat_start)
