@@ -160,16 +160,20 @@ prep_fp_fitmod_lf <- function(params, eppd, epp_t0, ...) {
 
   ## Prepare the EPP model
   params$ts_epidemic_start <- epp_t0 + 0.5
-  if(params$eppmod == "rspline") {
-    fp <- prepare_rspline_model_lf(params, ts_epidemic_start = params$ts_epidemic_start)
-  } else if(params$eppmod == "logrw") {
-    stop("TODO impl logrw for leapfrog")
-    fp <- prepare_logrw(params)
-  } else if(params$eppmod == "rhybrid") {
+  if (params$eppmod == "rspline") {
+    fp <- prepare_rspline_model_lf(params,
+                                   ts_epidemic_start = params$ts_epidemic_start)
+  } else if (params$eppmod == "logrw") {
+    fp <- prepare_logrw_lf(params,
+                           ts_epidemic_start = params$ts_epidemic_start)
+  } else if (params$eppmod == "rhybrid") {
     fp <- prepare_rhybrid_lf(params)
-  } else if(params$eppmod == "rlogistic") {
+  } else if (params$eppmod == "rlogistic") {
     fp <- params
-    fp$ts_epidemic_start <- params$proj_steps[which.min(abs(params$proj_steps - params$ts_epidemic_start))]
+    fp$ts_epidemic_start <-
+      params$proj_steps[
+        which.min(abs(params$proj_steps - params$ts_epidemic_start))
+      ]
   }
 
   fp$logitiota <- TRUE

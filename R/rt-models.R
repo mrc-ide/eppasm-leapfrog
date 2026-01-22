@@ -30,6 +30,44 @@ prepare_logrw <- function(fp, tsEpidemicStart=fp$ss$time_epi_start+0.5){
 }
 
 
+prepare_logrw_lf <- function(params, ts_epidemic_start = 1975.5) {
+  params$ts_epidemic_start <- params$proj_steps[
+    which.min(abs(params$proj_steps - ts_epidemic_start))
+  ]
+  rw_steps <- params$proj_steps[params$proj_steps >= params$ts_epidemic_start]
+
+  rt <- list()
+  rt$nsteps_preepi <-
+    length(params$proj_steps[params$proj_steps < ts_epidemic_start])
+
+  if (!exists("n_rw", params)) {
+    rt$n_rw <- ceiling(diff(range(rw_steps)))
+  } else {
+    rt$n_rw <- params$n_rw
+  }
+
+  params$num_knots <- rt$n_rw
+
+  ## Random walk design matrix
+  rt$rw_knots <- seq(min(rw_steps), max(rw_steps), length.out = rt$n_rw + 1)
+  rt$rw_x <- outer(rw_steps, rt$rw_knots[1:rt$n_rw], ">=")
+  class(rt$rw_x) <- "integer"
+
+  params$rt <- rt
+
+  params$rvec_spldes <- rbind(
+    matrix(0, rt$nsteps_preepi, params$num_knots), rt$rw_x
+  )
+
+  if (!exists("eppmod", params)) {
+    params$eppmod <- "logrw"
+  }
+  params$iota <- NULL
+
+  return(params)
+}
+
+
 rlog_pr_mean <- c(log(0.35), log(0.09), log(0.2), 1993)
 rlog_pr_sd <- c(0.5, 0.3, 0.5, 5)
 
