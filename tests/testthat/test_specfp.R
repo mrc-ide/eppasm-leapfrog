@@ -1,6 +1,6 @@
 context("test specfp objects")
 
-pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm")
+pjnz <- system_file("extdata/testpjnz", "Botswana2018.PJNZ")
 fp <- prepare_directincid(pjnz)
 
 test_that("paedsurv dist sums to one for each sex-year", {
@@ -28,5 +28,5 @@ test_that("PJNZ read functions work for Francophone saved files", {
 
   expect_is(tgo2022_demp, "demp")
   expect_is(tgo2022_specres, "specres")
-  
+
 })

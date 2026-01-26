@@ -10,23 +10,7 @@
 prepare_spec_fit <- function(pjnz, proj.end=2016.5, popadjust = NULL, popupdate=TRUE, use_ep5=FALSE){
 
   ## epp
-  eppd <- epp::read_epp_data(pjnz)
-  ## epp.subp <- epp::read_epp_subpops(pjnz)
-  ## epp.input <- epp::read_epp_input(pjnz)
-
-  ## epp.subp.input <- epp::fnCreateEPPSubpops(epp.input, epp.subp, eppd)
-
-  country <- attr(eppd, "country")
-  cc <- attr(eppd, "country_code")
-
-  ## melt site-level data
-  eppd <- Map("[[<-", eppd, "ancsitedat", lapply(eppd, melt_ancsite_data))
-
-  ## tidy HHS data
-  eppd <- Map("[[<-", eppd, "hhs", lapply(eppd, tidy_hhs_data))
-
-  attr(eppd, "country") <- country
-  attr(eppd, "country_code") <- cc
+  eppd <- prep_epp_data(pjnz)
 
   ## spectrum
   demp <- read_specdp_demog_param(pjnz, use_ep5=use_ep5)
@@ -63,6 +47,24 @@ prepare_spec_fit <- function(pjnz, proj.end=2016.5, popadjust = NULL, popupdate=
   attr(val, "region") <- read_region(pjnz)
 
   return(val)
+}
+
+prep_epp_data <- function(pjnz) {
+  eppd <- epp::read_epp_data(pjnz)
+
+  country <- attr(eppd, "country")
+  cc <- attr(eppd, "country_code")
+
+  ## melt site-level data
+  eppd <- Map("[[<-", eppd, "ancsitedat", lapply(eppd, melt_ancsite_data))
+
+  ## tidy HHS data
+  eppd <- Map("[[<-", eppd, "hhs", lapply(eppd, tidy_hhs_data))
+
+  attr(eppd, "country") <- country
+  attr(eppd, "country_code") <- cc
+
+  eppd
 }
 
 #' Melt ANC-SS and site-level ANC-RT to long dataset
@@ -290,83 +292,6 @@ leapfrog_params_to_fit_params <- function(leapfrog_params, eppmod, AGE_START = 1
       hiv_steps_per_year = hiv_steps_per_year,
       time_epi_start = leapfrog_params$time_epi_start
     )
-  )
-}
-
-#' Prepare fp object for fitting and prepare likelihood data
-#'
-#' @param obj specfp or eppfp object
-#' @param ... Additional parameters to override on `obj`
-#' @param epp If TRUE prep EPP model fit
-#'
-#' @returns List containing `fp` object ready for fitting and likelihood
-#'   data `likdat`
-#' @export
-prep_fp_fitmod <- function(obj, ..., epp = FALSE) {
-  ## ... : updates to fixed parameters (fp) object to specify fitting options
-
-  if (epp) {
-    fp <- stats::update(attr(obj, 'eppfp'), ...)
-  } else {
-    fp <- stats::update(attr(obj, 'specfp'), ...)
-  }
-
-  ## Prepare likelihood data
-  eppd <- attr(obj, "eppd")
-
-  has_ancrtsite <- exists("ancsitedat", eppd) && any(eppd$ancsitedat$type == "ancrt")
-  has_ancrtcens <- !is.null(eppd$ancrtcens) && nrow(eppd$ancrtcens)
-
-  if (!has_ancrtsite) {
-    fp$ancrtsite.beta <- 0
-  }
-
-  if (has_ancrtsite & has_ancrtcens) {
-    fp$ancrt <- "both"
-  } else if (has_ancrtsite & !has_ancrtcens) {
-    fp$ancrt <- "site"
-  } else if (!has_ancrtsite & has_ancrtcens) {
-    fp$ancrt <- "census"
-  } else {
-    fp$ancrt <- "none"
-  }
-
-  likdat <- prepare_likdat(eppd, fp)
-  fp$ancsitedata <- as.logical(nrow(likdat$ancsite.dat$df))
-
-  if(fp$eppmod %in% c("logrw", "rhybrid")) { # THIS IS REALLY MESSY, NEED TO REFACTOR CODE
-
-    fp$SIM_YEARS <- as.integer(max(likdat$ancsite.dat$df$yidx,
-                                   likdat$hhs.dat$yidx,
-                                   likdat$ancrtcens.dat$yidx,
-                                   likdat$hhsincid.dat$idx))
-
-    fp$proj.steps <- seq(fp$ss$proj_start+0.5, fp$ss$proj_start-1+fp$SIM_YEARS+0.5, by=1/fp$ss$hiv_steps_per_year)
-  } else {
-    fp$SIM_YEARS <- fp$ss$PROJ_YEARS
-  }
-
-  ## Prepare the EPP model
-  tsEpidemicStart <- if(epp) fp$tsEpidemicStart else fp$ss$time_epi_start+0.5
-  if(fp$eppmod == "rspline")
-    fp <- prepare_rspline_model(fp, tsEpidemicStart=tsEpidemicStart)
-  else if(fp$eppmod == "rtrend")
-    fp <- prepare_rtrend_model(fp)
-  else if(fp$eppmod == "logrw")
-    fp <- prepare_logrw(fp)
-  else if(fp$eppmod == "rhybrid")
-    fp <- prepare_rhybrid(fp)
-  else if(fp$eppmod == "rlogistic")
-    fp$tsEpidemicStart <- fp$proj.steps[which.min(abs(fp$proj.steps - fp$ss$time_epi_start+0.5))]
-
-  fp$logitiota <- TRUE
-
-  ## Prepare the incidence model
-  fp$incidmod <- "eppspectrum"
-
-  list(
-    fp = fp,
-    likdat = likdat
   )
 }
 

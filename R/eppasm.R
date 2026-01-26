@@ -1,6 +1,6 @@
 #' @useDynLib eppasm eppasmC
 #' @export
-simmod.specfp <- function(fp, VERSION="leapfrog", ...) {
+simmod.specfp <- function(fp, VERSION = "leapfrog", ...) {
 
   if (!exists("popadjust", where=fp)) {
     fp$popadjust <- FALSE
@@ -597,4 +597,10 @@ spec_add_dimnames <- function(mod, fp) {
   names(attr(mod, "entrantprev")) <- nm_years
 
   mod
+}
+
+simmod_lf <- function(fp) {
+  output_years <- seq(fp$projection_start_year, fp$projection_start_year + fp$sim_years - 1)
+  leapfrog_result <- leapfrog::run_model(fp, "HivCoarseAgeStratification", output_years = output_years)
+  leapfrog_result_to_mod(leapfrog_result, fp)
 }

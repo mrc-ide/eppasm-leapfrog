@@ -1,5 +1,5 @@
 test_that("can run convert transmission input fp into leapfrog params", {
-  pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package = "eppasm")
+  pjnz <- system_file("extdata", "testpjnz", "Botswana2018.PJNZ")
   inputs <- prepare_spec_fit(pjnz, 2025.5)
 
   fp <- prep_fp_fitmod(inputs$Urban, eppmod = "rhybrid")$fp
@@ -16,7 +16,7 @@ test_that("can run convert transmission input fp into leapfrog params", {
 })
 
 test_that("can convert output from leapfrog into mod data", {
-  pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package="eppasm")
+  pjnz <- system_file("extdata", "testpjnz", "Botswana2018.PJNZ")
   params <- leapfrog::process_pjnz(pjnz,
                                    extract_child_params = FALSE,
                                    use_coarse_age_groups = TRUE)
@@ -36,7 +36,7 @@ test_that("can convert output from leapfrog into mod data", {
 })
 
 test_that("can run simmod with leapfrog direct incidence data", {
-  pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package = "eppasm")
+  pjnz <- system_file("extdata", "testpjnz", "Botswana2018.PJNZ")
   fp <- prepare_directincid(pjnz)
 
   mod <- simmod(fp, VERSION = "leapfrog")
@@ -46,7 +46,7 @@ test_that("can run simmod with leapfrog direct incidence data", {
 })
 
 test_that("can run simmod with leapfrog transmission input data", {
-  pjnz <- system.file("extdata", "testpjnz", "Botswana2018.PJNZ", package = "eppasm")
+  pjnz <- system_file("extdata", "testpjnz", "Botswana2018.PJNZ")
   inputs <- prepare_spec_fit(pjnz, 2018.5)
 
   fp <- prep_fp_fitmod(inputs$Urban, eppmod = "rhybrid")$fp

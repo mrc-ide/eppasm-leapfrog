@@ -635,7 +635,7 @@ extern "C" {
 	// (Note: incidence rate by age is calculated per time-step using the
 	//    **current year** HIV population, instead of the previous year
 	//    HIV population.
-	//    Rob Glaubius, 5 August 2022: https://github.com/mrc-ide/leapfrog/issues/18)
+	//    Rob Glaubius, 5 August 2022: https://github.com/mrc-ide/leaptfrog/issues/18)
 
 	for(int g = 0; g < NG; g++) {
 	  Xhivn[g] = 0.0;
