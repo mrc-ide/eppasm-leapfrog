@@ -1,8 +1,8 @@
 # Example of using EPPASM with leapfrog model engine
 
-EPPASM can use the [leapfrog](https://github.com/mrc-ide/leapfrog) model
-during simulation and fitting. This vignette shows an example of using
-leapfrog with EPPASM.
+EPPASM can use the [leapfrog](https://github.com/hivtools/leapfrog)
+model during simulation and fitting. This vignette shows an example of
+using leapfrog with EPPASM.
 
 Firstly we need to read the data
 

@@ -194,7 +194,7 @@ paediatric net migration inputs depends on the choice.
   - Calculation of incidence rate by sex uses **previous** year HIV
     negative population
   - Thanks Rob Glaubius for debugging:
-    <https://github.com/mrc-ide/leapfrog/issues/18>
+    <https://github.com/mrc-ide/leaptfrog/issues/18>
 
 ## eppasm 0.6.1
 

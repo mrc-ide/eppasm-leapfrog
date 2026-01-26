@@ -3,7 +3,8 @@
 The goal of eppasm is to …
 
 Forked from [eppasm](https://github.com/mrc-ide/eppasm) using
-[leapfrog](https://github.com/mrc-ide/leapfrog) as the underlying model.
+[leapfrog](https://github.com/hivtools/leapfrog) as the underlying
+model.
 
 ## Installation
 
