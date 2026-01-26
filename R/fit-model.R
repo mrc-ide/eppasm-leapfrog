@@ -364,6 +364,63 @@ fitmod <- function(obj, ..., epp=FALSE, B0 = 1e5, B = 1e4, B.re = 3000, number_k
   return(fit)
 }
 
+#' @export
+fitmod_lf <- function(lf_params, eppd, epp_t0, ...,
+                      B0 = 1e5, B = 1e4, B.re = 3000, number_k = 500, opt_iter=0,
+                      sample_prior=sample_prior_lf,
+                      prior=prior_lf,
+                      likelihood=likelihood_lf,
+                      optfit=FALSE, opt_method="BFGS", opt_init=NULL,
+                      opt_maxit=1000, opt_diffstep=1e-3, opthess=TRUE) {
+
+  prep <- prep_fp_fitmod_lf(lf_params, eppd, epp_t0, ...)
+  fp <- prep$fp
+  likdat <- prep$likdat
+
+  ## Fit using optimization
+  if (optfit) {
+    optfn <- function(theta, fp, likdat) lprior_lf(theta, fp) + sum(ll_lf(theta, fp, likdat))
+    if (is.null(opt_init)) {
+      X0 <- sample_prior(B0, fp)
+      lpost0 <- likelihood(X0, fp, likdat, log=TRUE) + prior(X0, fp, log=TRUE)
+      opt_init <- X0[which.max(lpost0)[1],]
+    }
+    opt <- stats::optim(opt_init, optfn, fp=fp, likdat=likdat, method=opt_method, control=list(fnscale=-1, trace=4, maxit=opt_maxit, ndeps=rep(opt_diffstep, length(opt_init))))
+    opt$fp <- fp
+    opt$likdat <- likdat
+    opt$param <- fnCreateParam_lf(opt$par, fp)
+    opt$mod <- simmod_lf(modifyList(fp, opt$param))
+    if (opthess) {
+      opt$hessian <- stats::optimHess(opt_init, optfn, fp=fp, likdat=likdat,
+                                      control=list(fnscale=-1,
+                                                   trace=4,
+                                                   maxit=1e3,
+                                                   ndeps=rep(.Machine$double.eps^0.5, length(opt_init))))
+      opt$resample <- mvtnorm::rmvnorm(B.re, opt$par, solve(-opt$hessian))
+
+      class(opt) <- c(class, "specfit")
+    }
+
+    return(opt)
+  }
+
+  ## If IMIS fails, start again
+  fit <- try(stop(""), TRUE)
+  while(inherits(fit, "try-error")){
+    start.time <- proc.time()
+    fit <- try(imis(B0, B, B.re, number_k, opt_iter, fp=fp, likdat=likdat,
+                    sample_prior=sample_prior, prior=prior, likelihood=likelihood))
+    fit.time <- proc.time() - start.time
+  }
+  fit$fp <- fp
+  fit$likdat <- likdat
+  fit$time <- fit.time
+
+  class(fit) <- "specfit"
+
+  return(fit)
+}
+
 get_likdat_range <- function(likdat) {
 
   firstdata.idx <- as.integer(min(likdat$ancsite.dat$df$yidx,
