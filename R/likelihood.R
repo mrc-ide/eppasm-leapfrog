@@ -659,11 +659,11 @@ ll_hhsage <- function(mod, fp, dat, pointwise = FALSE) {
 #' @export
 ll_hhsage_lf <- function(mod, fp, dat, pointwise = FALSE) {
 
-  prevM_age <- ageprev(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx, agspan = dat$agspan)
+  prevM_age <- ageprev_lf(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx, agspan = dat$agspan)
   ## If calendar year projection, average current and previous year prevalence to
   ## approximate mid-year prevalence
   if (fp$projection_period == "calendar") {
-    prevM_age_last <- ageprev(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx-1L, agspan = dat$agspan)
+    prevM_age_last <- ageprev_lf(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx-1L, agspan = dat$agspan)
     prevM_age <- 0.5 * (prevM_age + prevM_age_last)
   }
 
@@ -703,6 +703,45 @@ ll_hhsage_binom <- function(mod, fp, dat, pointwise = FALSE){
 
   if(pointwise)
     return(val)
+
+  sum(val)
+}
+
+
+#' Log likelihood for age-specific household survey prevalence using binomial
+#' approximation
+#' @export
+ll_hhsage_binom_lf <- function(mod, fp, dat, pointwise = FALSE) {
+
+  prev_m_age <- suppressWarnings(
+    ageprev_lf(mod,
+               aidx = dat$aidx,
+               sidx = dat$sidx,
+               yidx = dat$yidx,
+               agspan = dat$agspan)
+  )
+
+  ## If calendar year projection, average current and previous year prevalence
+  ## to approximate mid-year prevalence
+  if (fp$projection_period == "calendar") {
+    prev_m_age_last <- ageprev_lf(mod,
+                                  aidx = dat$aidx,
+                                  sidx = dat$sidx,
+                                  yidx = dat$yidx - 1L,
+                                  agspan = dat$agspan)
+    prev_m_age <- 0.5 * (prev_m_age + prev_m_age_last)
+  }
+
+  if (any(is.na(prev_m_age)) || any(prev_m_age >= 1)) {
+    val <- rep(-Inf, nrow(dat))
+  } else {
+    val <- ldbinom(dat$x_eff, dat$n_eff, prev_m_age)
+  }
+  val[is.na(val)] <- -Inf
+
+  if (pointwise) {
+    return(val)
+  }
 
   sum(val)
 }
@@ -790,7 +829,7 @@ ll_hhsartcov <- function(mod, fp, dat, pointwise = FALSE) {
 #' Log likelihood for age-specific household survey prevalence
 ll_hhsartcov_lf <- function(mod, fp, dat, pointwise = FALSE){
 
-  artcovM <- artcov15to49(mod)
+  artcovM <- artcov15to49_lf(mod)
   artcovM_obs <- artcovM[dat$yidx]
 
   ## If calendar year projection, average current and previous year
@@ -853,6 +892,26 @@ ll_hhsincid <- function(mod, fp, hhsincid.dat){
   logincid <- log(incid(mod, fp))
   ll.incid <- sum(stats::dnorm(hhsincid.dat$log_incid, logincid[hhsincid.dat$idx], hhsincid.dat$log_incid.se, TRUE))
   return(ll.incid)
+}
+
+
+#' Log-likelhood for direct incidence estimate from household survey
+#'
+#' Calculate log-likelihood for nationally representative incidence
+#' estimates from a household survey. Currently implements likelihood
+#' for a log-transformed direct incidence estimate and standard error.
+#' Needs to be updated to handle incidence assay outputs.
+#'
+#' @param mod model output, object of class `spec`.
+#' @param hhsincid.dat prepared houshold survey incidence estimates (see perp
+ll_hhsincid_lf <- function(mod, fp, hhsincid_dat) {
+  logincid <- log(mod$incid_15to49)
+  sum(
+    stats::dnorm(hhsincid_dat$log_incid,
+                 logincid[hhsincid_dat$idx],
+                 hhsincid_dat$log_incid.se,
+                 TRUE)
+  )
 }
 
 
@@ -1189,7 +1248,7 @@ ll_lf <- function(theta, fp, likdat) {
   ## Household survey likelihood
   if (!is.null(likdat$hhs_dat)) {
     if (!is.null(fp$ageprev) && fp$ageprev=="binom") {
-      ll_hhs <- ll_hhsage_binom(mod, fp, likdat$hhs_dat)
+      ll_hhs <- ll_hhsage_binom_lf(mod, fp, likdat$hhs_dat)
     } else { ## use probit likelihood
       ll_hhs <- ll_hhsage_lf(mod, fp, likdat$hhs_dat) # probit-transformed model
     }
@@ -1198,7 +1257,7 @@ ll_lf <- function(theta, fp, likdat) {
   }
 
   if (!is.null(likdat$hhsincid.dat)) {
-    ll_incid <- ll_hhsincid(mod, fp, likdat$hhsincid_dat)
+    ll_incid <- ll_hhsincid_lf(mod, fp, likdat$hhsincid_dat)
   } else {
     ll_incid <- 0
   }
@@ -1220,7 +1279,7 @@ ll_lf <- function(theta, fp, likdat) {
                         likdat$ancrtcens_dat$yidx,
                         likdat$hhsincid_dat$idx)
 
-    qM_all <- suppressWarnings(stats::qnorm(prev(mod)))
+    qM_all <- suppressWarnings(stats::qnorm(mod$prev_15to49))
 
     if (any(is.na(qM_all[lastdata_idx - 9:0]))) {
       ll.rprior <- -Inf

@@ -600,7 +600,46 @@ spec_add_dimnames <- function(mod, fp) {
 }
 
 simmod_lf <- function(fp) {
-  output_years <- seq(fp$projection_start_year, fp$projection_start_year + fp$sim_years - 1)
-  leapfrog_result <- leapfrog::run_model(fp, "HivCoarseAgeStratification", output_years = output_years)
-  leapfrog_result_to_mod(leapfrog_result, fp)
+  output_years <-
+    seq(fp$projection_start_year, fp$projection_start_year + fp$sim_years - 1)
+  leapfrog_result <- leapfrog::run_model(
+    fp, "HivCoarseAgeStratification", output_years = output_years
+  )
+
+  age_15_idx <- 16L
+  age_49_idx <- 50L
+  age_15to49_idx <- age_15_idx:age_49_idx
+  age_1580plus_idx <- age_15_idx:81
+
+  n_ages <- length(age_1580plus_idx)
+  n_sex <- 2
+
+  # the 3rd dimension is hiv negative, hiv +ve
+  pop <- array(0, dim = c(n_ages, n_sex, 2, fp$sim_years))
+  hivneg_pop <- leapfrog_result$p_totpop - leapfrog_result$p_hivpop
+  pop[, , 1, ] <- hivneg_pop[age_1580plus_idx, , ]
+  pop[, , 2, ] <- leapfrog_result$p_hivpop[age_1580plus_idx, , ]
+  pop <- pad_last_dim(pop, fp$proj_years)
+  leapfrog_result$pop <- pop
+
+  # 15to49 prevalence
+  hivpop_15to49 <-
+    colSums(leapfrog_result$p_hivpop[age_15to49_idx, , ], dims = 2)
+  totpop_15to49 <-
+    colSums(leapfrog_result$p_totpop[age_15to49_idx, , ], dims = 2)
+  prev_15to49 <- hivpop_15to49 / totpop_15to49
+  leapfrog_result$prev_15to49 <- prev_15to49
+
+  # 15to49 incidence is
+  # new infections in 15 - 49 / hiv -ve pop (totpop - hivpop) in previous year
+  hivneg_15to49 <- colSums(hivneg_pop[age_15to49_idx, , ], dims = 2)
+  infections_15to49 <-
+    colSums(leapfrog_result$p_infections[age_15to49_idx, , ], dims = 2)
+  incid_15to49 <- array(0, dim = length(hivneg_15to49))
+  n_years <- fp$sim_years
+  incid_15to49[2:n_years] <-
+    infections_15to49[2:n_years] / hivneg_15to49[1:(n_years - 1)]
+  leapfrog_result$incid_15to49 <- incid_15to49
+
+  leapfrog_result
 }

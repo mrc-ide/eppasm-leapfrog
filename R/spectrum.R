@@ -496,7 +496,6 @@ hivagemx.spec <- function(mod) {
 }
 
 
-
 #' Prevalence by arbitrary age groups
 #'
 #' @param sidx sex (1 = Male, 2 = Female, 0 = Both)
@@ -557,6 +556,83 @@ ageprev <- function(mod, aidx=NULL, sidx=NULL, yidx=NULL, agspan=5, expand=FALSE
 
   if(expand)
     prev <- array(prev, dimout)
+
+  return(prev)
+}
+
+
+#' Prevalence by arbitrary age groups
+#'
+#' @param sidx sex (1 = Male, 2 = Female, 0 = Both)
+#' Notes: Assumes that AGE_START is 15 and single year of age.
+#'
+#'
+#' @useDynLib eppasm ageprevC
+#' @export
+#'
+ageprev_lf <- function(mod,
+                       a_idx = NULL,
+                       s_idx = NULL,
+                       y_idx = NULL,
+                       ag_span = 5,
+                       expand = FALSE,
+                       version = "C") {
+
+  if (length(ag_span) == 1) {
+    ag_span <- rep(ag_span, length(a_idx))
+  }
+
+  if (expand) {
+    dim_out <- c(length(a_idx), length(s_idx), length(y_idx))
+    df <- expand.grid(a_idx=a_idx, s_idx=s_idx, y_idx=y_idx)
+    a_idx <- df$a_idx
+    s_idx <- df$s_idx
+    y_idx <- df$y_idx
+    ag_span <- rep(ag_span, times = length(s_idx) * length(y_idx))
+  }
+
+  if (version != "R") {
+    prev <- .Call(ageprevC, mod$pop,
+                  as.integer(a_idx), as.integer(s_idx),
+                  as.integer(y_idx), as.integer(ag_span))
+  } else {
+    idx <- data.frame(
+      a_idx = a_idx, s_idx = s_idx, y_idx = y_idx, ag_span = ag_span
+    )
+    idx$g_idx <- seq_len(nrow(idx))
+
+    ## Add M/F entries with same id if s_idx = 0.
+    ## This is probably a pretty inefficient way of doing this...
+
+    if (any(idx$s_idx == 0)) {
+      idx <- rbind(idx[idx$s_idx != 0, ],
+                   transform(idx[idx$s_idx == 0, ], s_idx = 1),
+                   transform(idx[idx$s_idx == 0, ], s_idx = 2))
+      idx <- idx[order(idx$g_idx, idx$s_idx), ]
+    }
+
+    idx$id <- seq_len(nrow(idx))
+
+    increment <- unlist(lapply(idx$ag_span, seq_len)) - 1
+    id_idx <- rep(idx$id, idx$ag_span)
+
+    g_idx <- idx$g_idx[id_idx]
+    a_idx <- idx$a_idx[id_idx] + increment
+    s_idx <- idx$s_idx[id_idx]
+    y_idx <- idx$y_idx[id_idx]
+
+    hiv_n <- fastmatch::ctapply(
+      mod$pop[cbind(a_idx, s_idx, 1, y_idx)], g_idx, sum
+    )
+    hiv_p <- fastmatch::ctapply(
+      mod$pop[cbind(a_idx, s_idx, 2, y_idx)], g_idx, sum
+    )
+    prev <- hiv_p / (hiv_n + hiv_p)
+  }
+
+  if (expand) {
+    prev <- array(prev, dim_out)
+  }
 
   return(prev)
 }
@@ -746,12 +822,12 @@ agepregprev_lf <- function(mod, fp,
   fert_idx <- match(a_idx, fp$ss$p_fert_idx)
   hfert_idx <- match(fp$ss$ag_idx[a_idx], fp$ss$h_fert_idx)
 
-  hivp <- (mod[cbind(a_idx, s_idx, 2, y_idx)] + mod[cbind(a_idx, s_idx, 2, yminus1_idx)]) / 2
-  hivn <- (mod[cbind(a_idx, s_idx, 1, y_idx)] + mod[cbind(a_idx, s_idx, 1, yminus1_idx)]) / 2
+  hivp <- (mod$pop[cbind(a_idx, s_idx, 2, y_idx)] + mod$pop[cbind(a_idx, s_idx, 2, yminus1_idx)]) / 2
+  hivn <- (mod$pop[cbind(a_idx, s_idx, 1, y_idx)] + mod$pop[cbind(a_idx, s_idx, 1, yminus1_idx)]) / 2
 
   ## Calculate age-specific FRR given the CD4 and ART duration distribution
-  hivpop_fert <- attr(mod, "hivpop")[ , fp$ss$h_fert_idx, fp$ss$f_idx, ]
-  artpop_fert <- attr(mod, "artpop")[ , , fp$ss$h_fert_idx, fp$ss$f_idx, ]
+  hivpop_fert <- mod$h_hivpop[ , fp$ss$h_fert_idx, fp$ss$f_idx, ]
+  artpop_fert <- mod$h_artpop[ , , fp$ss$h_fert_idx, fp$ss$f_idx, ]
   ha_frr <- (colSums(hivpop_fert * fp$frr_cd4) + colSums(artpop_fert * fp$frr_art,,2)) / (colSums(hivpop_fert) + colSums(artpop_fert,,2))
 
   births_a <- fp$asfr[cbind(fert_idx, y_idx)] * (hivn + hivp)
@@ -797,12 +873,12 @@ agepregartcov <- function(mod, fp,
   fert_idx <- match(a_idx, fp$ss$p.fert.idx)
   hfert_idx <- match(fp$ss$ag.idx[a_idx], fp$ss$h.fert.idx)
 
-  hivp <- (mod[cbind(a_idx, s_idx, 2, y_idx)] + mod[cbind(a_idx, s_idx, 2, yminus1_idx)]) / 2
-  hivn <- (mod[cbind(a_idx, s_idx, 1, y_idx)] + mod[cbind(a_idx, s_idx, 1, yminus1_idx)]) / 2
+  hivp <- (mod$pop[cbind(a_idx, s_idx, 2, y_idx)] + mod$pop[cbind(a_idx, s_idx, 2, yminus1_idx)]) / 2
+  hivn <- (mod$pop[cbind(a_idx, s_idx, 1, y_idx)] + mod$pop[cbind(a_idx, s_idx, 1, yminus1_idx)]) / 2
 
   ## Calculate age-specific FRR given the CD4 and ART duration distribution
-  hivpop_fert <- attr(mod, "hivpop")[ , fp$ss$h.fert.idx, fp$ss$f.idx, ]
-  artpop_fert <- attr(mod, "artpop")[ , , fp$ss$h.fert.idx, fp$ss$f.idx, ]
+  hivpop_fert <- mod$h_hivpop[ , fp$ss$h.fert.idx, fp$ss$f.idx, ]
+  artpop_fert <- mod$h_artpop[ , , fp$ss$h.fert.idx, fp$ss$f.idx, ]
   wgt_hivp <- colSums(hivpop_fert * fp$frr_cd4)
   wgt_art <- colSums(artpop_fert * fp$frr_art,,2)
 
@@ -843,6 +919,12 @@ artcov15to49.spec <- function(mod, sex=1:2, ...) {
   n_art <- colSums(attr(mod, "artpop")[,,1:8,sex,,drop=FALSE],,4)
   n_hiv <- colSums(attr(mod, "hivpop")[,1:8,sex,,drop=FALSE],,3)
   return(n_art / (n_hiv+n_art))
+}
+
+artcov15to49_lf <- function(mod, sex = 1:2, ...) {
+  n_art <- colSums(mod$h_artpop[, , 1:8, sex, , drop = FALSE], , 4)
+  n_hiv <- colSums(mod$h_hivpop[, 1:8, sex, , drop = FALSE], , 3)
+  return(n_art / (n_hiv + n_art))
 }
 
 #' @export
