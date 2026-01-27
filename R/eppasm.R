@@ -622,6 +622,24 @@ simmod_lf <- function(fp) {
   pop <- pad_last_dim(pop, fp$proj_years)
   leapfrog_result$pop <- pop
 
+  # When running with transmission input i.e. not direct incidence we
+  # need to run the model for the years in which there is data, and then
+  # project forward to full in up to PROJ_YEARS. If
+  # simulation years < projection years then there will be columns of 0s.
+  # Pad here with 0s.
+  pad_to_proj_years <- c("h_hivpop", "h_artpop", "p_infections", "p_hiv_deaths",
+                         "p_deaths_background_hivpop", "p_deaths_excess_nonaids",
+                         "h_hiv_deaths_no_art",
+                         "h_deaths_excess_nonaids_no_art", "h_hiv_deaths_art",
+                         "h_deaths_excess_nonaids_on_art", "h_art_initiation")
+  pad_to_hiv_time_steps <- c("incidence_15to49_hts", "prevalence_15to49_hts")
+  for (name in pad_to_proj_years) {
+    leapfrog_result[[name]] <- pad_last_dim(leapfrog_result[[name]], fp$proj_years)
+  }
+  for (name in pad_to_hiv_time_steps) {
+    leapfrog_result[[name]] <- pad_last_dim(leapfrog_result[[name]], (fp$proj_years - 1) * fp$ss$hiv_steps_per_year)
+  }
+
   # 15to49 prevalence
   hivpop_15to49 <-
     colSums(leapfrog_result$p_hivpop[age_15to49_idx, , ], dims = 2)

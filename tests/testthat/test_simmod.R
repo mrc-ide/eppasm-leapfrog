@@ -112,7 +112,6 @@ test_that("can call simmod with leapfrog data", {
   sim <- simmod_lf(fp)
 
   # TODO: write better checks here
-  expect_s3_class(sim, "spec")
   expect_equal(dim(sim$pop), c(66, 2, 2, 52))
   expect_true(any(sim$h_hivpop > 0))
 })

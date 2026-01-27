@@ -659,11 +659,11 @@ ll_hhsage <- function(mod, fp, dat, pointwise = FALSE) {
 #' @export
 ll_hhsage_lf <- function(mod, fp, dat, pointwise = FALSE) {
 
-  prevM_age <- ageprev_lf(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx, agspan = dat$agspan)
+  prevM_age <- ageprev_lf(mod, a_idx = dat$aidx, s_idx = dat$sidx, y_idx = dat$yidx, ag_span = dat$agspan)
   ## If calendar year projection, average current and previous year prevalence to
   ## approximate mid-year prevalence
   if (fp$projection_period == "calendar") {
-    prevM_age_last <- ageprev_lf(mod, aidx = dat$aidx, sidx = dat$sidx, yidx = dat$yidx-1L, agspan = dat$agspan)
+    prevM_age_last <- ageprev_lf(mod, a_idx = dat$aidx, s_idx = dat$sidx, y_idx = dat$yidx-1L, ag_span = dat$agspan)
     prevM_age <- 0.5 * (prevM_age + prevM_age_last)
   }
 
@@ -715,20 +715,20 @@ ll_hhsage_binom_lf <- function(mod, fp, dat, pointwise = FALSE) {
 
   prev_m_age <- suppressWarnings(
     ageprev_lf(mod,
-               aidx = dat$aidx,
-               sidx = dat$sidx,
-               yidx = dat$yidx,
-               agspan = dat$agspan)
+               a_idx = dat$aidx,
+               s_idx = dat$sidx,
+               y_idx = dat$yidx,
+               ag_span = dat$agspan)
   )
 
   ## If calendar year projection, average current and previous year prevalence
   ## to approximate mid-year prevalence
   if (fp$projection_period == "calendar") {
     prev_m_age_last <- ageprev_lf(mod,
-                                  aidx = dat$aidx,
-                                  sidx = dat$sidx,
-                                  yidx = dat$yidx - 1L,
-                                  agspan = dat$agspan)
+                                  a_idx = dat$aidx,
+                                  s_idx = dat$sidx,
+                                  y_idx = dat$yidx - 1L,
+                                  ag_span = dat$agspan)
     prev_m_age <- 0.5 * (prev_m_age + prev_m_age_last)
   }
 
@@ -909,7 +909,7 @@ ll_hhsincid_lf <- function(mod, fp, hhsincid_dat) {
   sum(
     stats::dnorm(hhsincid_dat$log_incid,
                  logincid[hhsincid_dat$idx],
-                 hhsincid_dat$log_incid.se,
+                 hhsincid_dat$log_incid_se,
                  TRUE)
   )
 }
