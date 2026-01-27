@@ -23,7 +23,7 @@ test_that("can convert output from leapfrog into mod data", {
 
   n_years <- dim(params$Sx)[length(dim(params$Sx))]
   output_years <- seq(params$projection_start_year, params$projection_start_year + n_years - 1)
-  leapfrog_result <- leapfrog::run_model(params, "HivCoarseAgeStratification", output_years = output_years)
+  leapfrog_result <- leapfrog::run_model(params, LEAPFROG_MODEL_CONFIG, output_years = output_years)
 
   params$sim_years <- length(output_years)
   params$proj_years <- params$sim_years

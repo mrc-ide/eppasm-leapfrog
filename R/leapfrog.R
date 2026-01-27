@@ -1,3 +1,6 @@
+# The name of the leapfrog model configuration to run.
+LEAPFROG_MODEL_CONFIG = "HivCoarseAgeStratification"
+
 #' Convert eppasm fp object into leapfrog parameters
 #'
 #' @param fp eppasm fixed parameters
