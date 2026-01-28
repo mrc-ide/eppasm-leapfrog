@@ -502,7 +502,7 @@ hivagemx.spec <- function(mod) {
 #' Notes: Assumes that AGE_START is 15 and single year of age.
 #'
 #'
-#' @useDynLib eppasm ageprevC
+#' @useDynLib eppasm.lf ageprevC
 #' @export
 #'
 ageprev <- function(mod, aidx=NULL, sidx=NULL, yidx=NULL, agspan=5, expand=FALSE, VERSION="C") {
@@ -567,7 +567,7 @@ ageprev <- function(mod, aidx=NULL, sidx=NULL, yidx=NULL, agspan=5, expand=FALSE
 #' Notes: Assumes that AGE_START is 15 and single year of age.
 #'
 #'
-#' @useDynLib eppasm ageprevC
+#' @useDynLib eppasm.lf ageprevC
 #' @export
 #'
 ageprev_lf <- function(mod,

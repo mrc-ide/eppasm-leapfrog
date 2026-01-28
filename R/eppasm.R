@@ -1,4 +1,4 @@
-#' @useDynLib eppasm eppasmC
+#' @useDynLib eppasm.lf eppasmC
 #' @export
 simmod.specfp <- function(fp, VERSION = "leapfrog", ...) {
 

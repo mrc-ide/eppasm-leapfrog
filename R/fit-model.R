@@ -298,9 +298,9 @@ leapfrog_params_to_fit_params <- function(leapfrog_params, eppmod, AGE_START = 1
 
 #' @export
 fitmod <- function(obj, ..., epp=FALSE, B0 = 1e5, B = 1e4, B.re = 3000, number_k = 500, opt_iter=0,
-                   sample_prior=eppasm:::sample.prior,
-                   prior=eppasm:::prior,
-                   likelihood=eppasm:::likelihood,
+                   sample_prior=eppasm.lf:::sample.prior,
+                   prior=eppasm.lf:::prior,
+                   likelihood=eppasm.lf:::likelihood,
                    optfit=FALSE, opt_method="BFGS", opt_init=NULL, opt_maxit=1000, opt_diffstep=1e-3, opthess=TRUE){
 
   prep <- prep_fp_fitmod(obj, ..., epp=epp)

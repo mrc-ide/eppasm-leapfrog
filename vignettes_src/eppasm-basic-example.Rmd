@@ -22,14 +22,14 @@ This vignette develops the workflow for fitting the EPP-ASM model and generating
 ```{r, load}
 ## eppasm version >= 0.5.2
 ## devtool::install_github("mrc-ide/eppasm@new-master")
-## library(eppasm)
+## library(eppasm.lf)
 devtools::load_all()
 ```
 
 ## Preparing EPP-ASM inputs
 
 ```{r, eppasm_inputs}
-pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm")
+pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm.lf")
 bw <- prepare_spec_fit(pjnz, proj.end=2021.5)
 ```
 

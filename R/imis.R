@@ -19,10 +19,10 @@
 #'
 #' @return list with items resample, stat, and center
 imis <- function(B0, B, B_re, number_k, opt_k=NULL, fp, likdat,
-                 prior = eppasm:::prior,
-                 likelihood = eppasm:::likelihood,
-                 sample_prior = eppasm:::sample.prior,
-                 dsamp = eppasm:::dsamp, save_all=FALSE){
+                 prior = eppasm.lf:::prior,
+                 likelihood = eppasm.lf:::likelihood,
+                 sample_prior = eppasm.lf:::sample.prior,
+                 dsamp = eppasm.lf:::dsamp, save_all=FALSE){
 
   ## Draw initial samples from prior distribution
   X_k <- sample_prior(B0, fp)  # Draw initial samples from the prior distribution
@@ -52,7 +52,7 @@ imis <- function(B0, B, B_re, number_k, opt_k=NULL, fp, likdat,
 
     ##  Keep only inputs with non-zero likelihood, calculate importance weights
     which_k <- which(ll_k > -Inf)
-    
+
     n_k[k] <- length(which_k)
     idx_k <- n_all + seq_len(n_k[k])
     n_all <- n_all+n_k[k]
@@ -104,18 +104,18 @@ imis <- function(B0, B, B_re, number_k, opt_k=NULL, fp, likdat,
       idx_init <- idx_remain[which.max(weights[idx_remain])]
       idx_exclude <- c(idx_exclude, idx_init)
       theta_init <- X_all[idx_init,]
-      
+
       nlposterior <- function(theta){-prior(theta, fp, log=TRUE)-likelihood(theta, fp, likdat, log=TRUE)}
 
       ## opt <- optimization_step(theta_init, nlposterior, cov_prior)  # Version by Bao uses prior covariance to parscale optimizer
       opt <- optimization_step(theta_init, nlposterior, stats::cov(X_all[1:n_all, ]))
       center_all[[k]] <- opt$mu
       sigma_all[[k]] <- opt$sigma
-      
+
       ## exclude the neighborhood of the local optima
       distance_remain <- stats::mahalanobis(X_all[seq_len(n_all),], center_all[[k]], diag(diag(sigma_all[[k]])))
       idx_exclude <- union(idx_exclude, order(distance_remain)[seq_len(n_all/length(opt_k))])
-      
+
     } else {
 
       ## choose mixture component centered at input with current maximum weight
@@ -149,7 +149,7 @@ imis <- function(B0, B, B_re, number_k, opt_k=NULL, fp, likdat,
 
 
 optimization_step <- function(theta, fn, cov){
-  
+
   ## The rough optimizer uses the Nelder-Mead algorithm.
   ptm.opt = proc.time()
   optNM <- stats::optim(theta, fn, method="Nelder-Mead",
