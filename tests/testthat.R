@@ -1,4 +1,4 @@
 library(testthat)
-library(eppasm)
+library(eppasm.lf)
 
-test_check("eppasm")
+test_check("eppasm.lf")

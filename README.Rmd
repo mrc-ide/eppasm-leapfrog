@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 ```
-# eppasm
+# eppasm.lf
 
   <!-- badges: start -->
   [![R-CMD-check](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml)  

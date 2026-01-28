@@ -72,7 +72,7 @@ ancrtsite.beta.pr.sd <- 1.0
 #'
 #' @export
 #' @examples
-#' pjnz <- system.file("extdata/testpjnz", "Botswana2017.PJNZ", package="eppasm")
+#' pjnz <- system.file("extdata/testpjnz", "Botswana2017.PJNZ", package="eppasm.lf")
 #' bw <- prepare_spec_fit(pjnz, proj.end=2021.5)
 #'
 #'
@@ -105,8 +105,6 @@ ancsite_pred_df <- function(ancsite_df, fp) {
 #' @param params Leapfrog parameter inputs
 #'
 #' @export
-#' TODO: examples
-#'
 ancsite_pred_df_lf <- function(ancsite_df, params) {
   df <- ancsite_df
   anchor_year <- params$projection_start_year

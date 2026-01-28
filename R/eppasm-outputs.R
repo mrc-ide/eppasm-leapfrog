@@ -14,7 +14,7 @@ get_proj_years <- function(ss){
 #' @return EPP-ASM model output with labelled dimensions
 #'
 #' @examples
-#' pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm")
+#' pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm.lf")
 #' fp <- prepare_directincid(pjnz)
 #' mod <- simmod(fp)
 #'
@@ -57,7 +57,7 @@ mod_dimnames <- function(mod, ss){
 #' @inheritParams mod_dimnames
 #'
 #' @examples
-#' pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm")
+#' pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm.lf")
 #' fp <- prepare_directincid(pjnz)
 #' mod <- simmod(fp)
 #' hivp1 <- hivpop_singleage(mod, fp$ss)
