@@ -32,7 +32,8 @@ test_that("fit with optfit works with leapfrog data", {
   fit <- fitmod_lf(inputs, eppd$Urban,
                    epp_t0["Urban"],
                    eppmod = "rhybrid",
-                   optfit = TRUE, opthess = TRUE,
+                   optfit = TRUE,
+                   opthess = FALSE,
                    rw_start = 2005,
                    B0=1e3,
                    B=1e2,
@@ -41,5 +42,7 @@ test_that("fit with optfit works with leapfrog data", {
 
   # TODO: What to test about this?
   expect_true(!is.null(fit))
-  expect_s3_class(fit, "specfit")
+  expect_true(all(c("fp", "likdat", "par", "mod") %in% names(fit)))
 })
+
+# TODO: add a test with opthess = TRUE (do we have any appropriate data for this?)

@@ -13,7 +13,7 @@ simmod.specfp <- function(fp, VERSION = "leapfrog", ...) {
   if (VERSION == "leapfrog") {
     params <- fp_to_leapfrog_params(fp)
     output_years <- seq(params$projection_start_year, params$projection_start_year + fp$SIM_YEARS - 1)
-    leapfrog_result <- leapfrog::run_model(params, "HivCoarseAgeStratification", output_years = output_years)
+    leapfrog_result <- leapfrog::run_model(params, LEAPFROG_MODEL_CONFIG, output_years = output_years)
     return(leapfrog_result_to_mod(leapfrog_result, params))
   }
 
@@ -603,16 +603,16 @@ simmod_lf <- function(fp) {
   output_years <-
     seq(fp$projection_start_year, fp$projection_start_year + fp$sim_years - 1)
   leapfrog_result <- leapfrog::run_model(
-    fp, "HivCoarseAgeStratification", output_years = output_years
+    fp, LEAPFROG_MODEL_CONFIG, output_years = output_years
   )
+  ss <- leapfrog::get_leapfrog_ss(LEAPFROG_MODEL_CONFIG)
 
-  age_15_idx <- 16L
-  age_49_idx <- 50L
-  age_15to49_idx <- age_15_idx:age_49_idx
-  age_1580plus_idx <- age_15_idx:81
+  # +1 to convert from C++ IDX to R IDX
+  age_15to49_idx <- (ss$pIDX_15to49 + 1):(ss$pIDX_15to49 + ss$pAG_15to49)
+  age_1580plus_idx <- (ss$pIDX_15to49 + 1):ss$pAG
 
   n_ages <- length(age_1580plus_idx)
-  n_sex <- 2
+  n_sex <- ss$NS
 
   # the 3rd dimension is hiv negative, hiv +ve
   pop <- array(0, dim = c(n_ages, n_sex, 2, fp$sim_years))
