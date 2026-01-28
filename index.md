@@ -1,4 +1,4 @@
-# eppasm
+# eppasm.lf
 
 The goal of eppasm is to …
 

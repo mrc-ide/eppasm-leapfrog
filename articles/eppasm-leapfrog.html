@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Example of using EPPASM with leapfrog model engine • eppasm</title>
+<title>Example of using EPPASM with leapfrog model engine • eppasm.lf</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -18,7 +18,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="../index.html">eppasm</a>
+    <a class="navbar-brand me-2" href="../index.html">eppasm.lf</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
@@ -72,13 +72,13 @@ simulation and fitting. This vignette shows an example of using leapfrog
 with EPPASM.</p>
 <p>Firstly we need to read the data</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pjnz</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/testpjnz"</span>, <span class="st">"Mozambique_Maputo_Cidade2018.PJNZ"</span>, package<span class="op">=</span><span class="st">"eppasm"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">pjnz</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/testpjnz"</span>, <span class="st">"Mozambique_Maputo_Cidade2018.PJNZ"</span>, package<span class="op">=</span><span class="st">"eppasm.lf"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="simulate-with-direct-incidence-input">Simulate with direct incidence input<a class="anchor" aria-label="anchor" href="#simulate-with-direct-incidence-input"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu">eppasm</span><span class="fu">::</span><span class="fu"><a href="../reference/prepare_directincid.html">prepare_directincid</a></span><span class="op">(</span><span class="va">pjnz</span><span class="op">)</span></span>
-<span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu">eppasm</span><span class="fu">::</span><span class="fu"><a href="../reference/simmod.html">simmod</a></span><span class="op">(</span><span class="va">fp</span>, VERSION <span class="op">=</span> <span class="st">"leapfrog"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu"><a href="../reference/prepare_directincid.html">prepare_directincid</a></span><span class="op">(</span><span class="va">pjnz</span><span class="op">)</span></span>
+<span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu"><a href="../reference/simmod.html">simmod</a></span><span class="op">(</span><span class="va">fp</span>, VERSION <span class="op">=</span> <span class="st">"leapfrog"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="simulate-with-transmission-input">Simulate with transmission input<a class="anchor" aria-label="anchor" href="#simulate-with-transmission-input"></a>
@@ -89,18 +89,18 @@ with EPPASM.</p>
 <span>                   <span class="fl">2.24103194827232</span>, <span class="op">-</span><span class="fl">0.0792123921862689</span>, <span class="op">-</span><span class="fl">5.01917961803606</span>, <span class="fl">0.359444135205712</span>,</span>
 <span>                   <span class="op">-</span><span class="fl">6.10051517060137</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">inputs</span> <span class="op">&lt;-</span> <span class="fu">eppasm</span><span class="fu">::</span><span class="fu"><a href="../reference/prepare_spec_fit.html">prepare_spec_fit</a></span><span class="op">(</span><span class="va">pjnz</span>, <span class="fl">2018.5</span><span class="op">)</span></span>
+<span><span class="va">inputs</span> <span class="op">&lt;-</span> <span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu"><a href="../reference/prepare_spec_fit.html">prepare_spec_fit</a></span><span class="op">(</span><span class="va">pjnz</span>, <span class="fl">2018.5</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">prep</span> <span class="op">&lt;-</span> <span class="fu">eppasm</span><span class="fu">::</span><span class="fu"><a href="../reference/prep_fp_fitmod.html">prep_fp_fitmod</a></span><span class="op">(</span><span class="va">inputs</span><span class="op">[[</span><span class="st">"Maputo Cidade"</span><span class="op">]</span><span class="op">]</span>, eppmod <span class="op">=</span> <span class="st">"rhybrid"</span><span class="op">)</span></span>
-<span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">prep</span><span class="op">$</span><span class="va">fp</span>, list<span class="op">=</span><span class="fu">eppasm</span><span class="fu">::</span><span class="fu">fnCreateParam</span><span class="op">(</span><span class="va">theta_rhybrid</span>, <span class="va">prep</span><span class="op">$</span><span class="va">fp</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">prep</span> <span class="op">&lt;-</span> <span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu"><a href="../reference/prep_fp_fitmod.html">prep_fp_fitmod</a></span><span class="op">(</span><span class="va">inputs</span><span class="op">[[</span><span class="st">"Maputo Cidade"</span><span class="op">]</span><span class="op">]</span>, eppmod <span class="op">=</span> <span class="st">"rhybrid"</span><span class="op">)</span></span>
+<span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">prep</span><span class="op">$</span><span class="va">fp</span>, list<span class="op">=</span><span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu">fnCreateParam</span><span class="op">(</span><span class="va">theta_rhybrid</span>, <span class="va">prep</span><span class="op">$</span><span class="va">fp</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu">eppasm</span><span class="fu">::</span><span class="fu"><a href="../reference/simmod.html">simmod</a></span><span class="op">(</span><span class="va">fp</span>, VERSION <span class="op">=</span> <span class="st">"leapfrog"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu"><a href="../reference/simmod.html">simmod</a></span><span class="op">(</span><span class="va">fp</span>, VERSION <span class="op">=</span> <span class="st">"leapfrog"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="fit-model">Fit model<a class="anchor" aria-label="anchor" href="#fit-model"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">eppasm</span><span class="fu">::</span><span class="fu">fitmod</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu">eppasm.lf</span><span class="fu">::</span><span class="fu">fitmod</span><span class="op">(</span></span>
 <span>  <span class="va">inputs</span><span class="op">[[</span><span class="st">"Maputo Cidade"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>  eppmod <span class="op">=</span> <span class="st">"rhybrid"</span>,</span>
 <span>  rw_start <span class="op">=</span> <span class="fl">2005</span>,</span>

@@ -9,12 +9,12 @@
 Source:
 [`DESCRIPTION`](https://github.com/mrc-ide/eppasm-leapfrog/blob/main/DESCRIPTION)
 
-Eaton J (2026). *eppasm: Age-structured EPP Model for HIV Epidemic
+Eaton J (2026). *eppasm.lf: Age-structured EPP Model for HIV Epidemic
 Estimates*. R package version 0.8.6,
 <https://mrc-ide.github.io/eppasm-leapfrog/>.
 
     @Manual{,
-      title = {eppasm: Age-structured EPP Model for HIV Epidemic Estimates},
+      title = {eppasm.lf: Age-structured EPP Model for HIV Epidemic Estimates},
       author = {Jeff Eaton},
       year = {2026},
       note = {R package version 0.8.6},

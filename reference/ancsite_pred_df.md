@@ -21,7 +21,7 @@ ancsite_pred_df(ancsite_df, fp)
 ## Examples
 
 ``` r
-pjnz <- system.file("extdata/testpjnz", "Botswana2017.PJNZ", package="eppasm")
+pjnz <- system.file("extdata/testpjnz", "Botswana2017.PJNZ", package="eppasm.lf")
 bw <- prepare_spec_fit(pjnz, proj.end=2021.5)
 
 

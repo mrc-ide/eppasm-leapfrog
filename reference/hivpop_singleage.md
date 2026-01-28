@@ -29,7 +29,7 @@ in each category within coarse age groups.
 ## Examples
 
 ``` r
-pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm")
+pjnz <- system.file("extdata/testpjnz", "Botswana2018.PJNZ", package="eppasm.lf")
 fp <- prepare_directincid(pjnz)
 mod <- simmod(fp)
 hivp1 <- hivpop_singleage(mod, fp$ss)

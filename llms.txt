@@ -1,4 +1,4 @@
-# eppasm
+# eppasm.lf
 
 The goal of eppasm is to …
 
@@ -39,9 +39,15 @@ remotes::install_github("mrc-ide/eppasm-leapfrog")
   : Age-specific ART coverage among pregnant women
 - [`agepregprev()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/agepregprev.md)
   : Age-specific prevalence among pregnant women
+- [`agepregprev_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/agepregprev_lf.md)
+  : Age-specific prevalence among pregnant women
 - [`ageprev()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ageprev.md)
   : Prevalence by arbitrary age groups
+- [`ageprev_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ageprev_lf.md)
+  : Prevalence by arbitrary age groups
 - [`ancsite_pred_df()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ancsite_pred_df.md)
+  : Prepare design matrix indices for ANC prevalence predictions
+- [`ancsite_pred_df_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ancsite_pred_df_lf.md)
   : Prepare design matrix indices for ANC prevalence predictions
 - [`calc_infections_eppspectrum()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/calc_infections_eppspectrum.md)
   : Annualized number of new infections
@@ -67,9 +73,18 @@ remotes::install_github("mrc-ide/eppasm-leapfrog")
 - [`ll_hhsage_binom()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsage_binom.md)
   : Log likelihood for age-specific household survey prevalence using
   binomial approximation
+- [`ll_hhsage_binom_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsage_binom_lf.md)
+  : Log likelihood for age-specific household survey prevalence using
+  binomial approximation
+- [`ll_hhsage_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsage_lf.md)
+  : Log likelihood for age-specific household survey prevalence
 - [`ll_hhsartcov()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsartcov.md)
   : Log likelihood for age-specific household survey prevalence
+- [`ll_hhsartcov_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsartcov_lf.md)
+  : Log likelihood for age-specific household survey prevalence
 - [`ll_hhsincid()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsincid.md)
+  : Log-likelhood for direct incidence estimate from household survey
+- [`ll_hhsincid_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/ll_hhsincid_lf.md)
   : Log-likelhood for direct incidence estimate from household survey
 - [`melt_ancsite_data()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/melt_ancsite_data.md)
   : Melt ANC-SS and site-level ANC-RT to long dataset
@@ -79,6 +94,9 @@ remotes::install_github("mrc-ide/eppasm-leapfrog")
   : Non-HIV age-specific mortality
 - [`prep_fp_fitmod()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prep_fp_fitmod.md)
   : Prepare fp object for fitting and prepare likelihood data
+- [`prep_fp_fitmod_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prep_fp_fitmod_lf.md)
+  : Prepare leapfrog inputs object for fitting and prepare likelihood
+  data
 - [`prepare_ancsite_likdat()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_ancsite_likdat.md)
   : Prepare site-level ANC prevalence data for EPP random-effects
   likelihood
@@ -86,11 +104,17 @@ remotes::install_github("mrc-ide/eppasm-leapfrog")
   : Prepare direct incidence input EPP simulation
 - [`prepare_hhsageprev_likdat()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_hhsageprev_likdat.md)
   : Prepare age-specific HH survey prevalence likelihood data
+- [`prepare_hhsageprev_likdat_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_hhsageprev_likdat_lf.md)
+  : Prepare age-specific HH survey prevalence likelihood data
 - [`prepare_hhsartcov_likdat()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_hhsartcov_likdat.md)
   : \## Household survey ART coverage likelihood
 - [`prepare_hhsincid_likdat()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_hhsincid_likdat.md)
   : Prepare household survey incidence likelihood data
+- [`prepare_likdat_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_likdat_lf.md)
+  : Prepare likelihood data from leapfrog data
 - [`prepare_rhybrid()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_rhybrid.md)
+  : Setup the r-hybrid model
+- [`prepare_rhybrid_lf()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_rhybrid_lf.md)
   : Setup the r-hybrid model
 - [`prepare_spec_fit()`](https://mrc-ide.github.io/eppasm-leapfrog/reference/prepare_spec_fit.md)
   : Prepare fit by EPP regions
