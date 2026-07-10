@@ -100,7 +100,10 @@ fp_to_leapfrog_params <- function(fp) {
     fert_rat = fp$fert_rat,
     cd4fert_rat = fp$cd4fert_rat,
     frr_art6mos = fp$frr_art6mos,
-    frr_scalar = fp$frr_scalar
+    frr_scalar = fp$frr_scalar,
+    pwid_sex_ratio = rep(-1, fp$SIM_YEARS),
+    pwid_hivpos_nonaids_mortality = -1,
+    pwid_prop_hivpop = rep(0, fp$SIM_YEARS)
   )
 
   class(leapfrog_params) <- class(fp)

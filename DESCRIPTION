@@ -12,7 +12,7 @@ Imports:
     binom,
     epp (>= 0.4.1),
     fastmatch (>= 1.1),
-    leapfrog (>= 0.1.8),
+    leapfrog (>= 0.1.12),
     mvtnorm,
     plyr,
     readxl,
@@ -22,14 +22,16 @@ Imports:
 LinkingTo: BH
 Remotes:
     jeffeaton/anclik,
-    jeffeaton/epp
+    jeffeaton/epp,
+    mrc-ide/eppasm
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Suggests: 
+Suggests:
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    eppasm
 VignetteBuilder: knitr
 URL: https://mrc-ide.github.io/eppasm-leapfrog/
 BugReports: https://github.com/mrc-ide/eppasm-leapfrog/issues
