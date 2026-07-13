@@ -90,11 +90,13 @@ fp_to_leapfrog_params <- function(fp) {
     cd4_nonaids_excess_mort = fp$cd4_nonaids_excess_mort,
     art_nonaids_excess_mort = fp$art_nonaids_excess_mort,
     art_dropout_recover_cd4 = fp$art_dropout_recover_cd4,
-    art_dropout_rate = -log(1.0 - fp$art_dropout / 100),
+    # fp$art_dropout is already the hazard rate -log(1 - p/100), set in
+    # create_specfp()/read_hivproj_param() - do not re-transform it here.
+    art_dropout_rate = fp$art_dropout,
     art15plus_num = fp$art15plus_num,
     art15plus_isperc = fp$art15plus_isperc,
     art_alloc_mxweight = fp$art_alloc_mxweight,
-    h_art_stage_dur = rep(0.5, fp$ss$hiv_steps_per_year - 1),
+    h_art_stage_dur = fp$ss$h_art_stage_dur,
     pAG_INCIDPOP = pAG_INCIDPOP,
     pIDX_INCIDPOP = 15L,
     fert_rat = fp$fert_rat,
