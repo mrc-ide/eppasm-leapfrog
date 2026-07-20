@@ -110,18 +110,20 @@ prep_fp_fitmod_lf <- function(params, eppd, epp_t0, ...) {
   params$ss$ag_idx <- rep(1:params$ss$hAG, params$ss$h_ag_span)
   params$ss$h_fert_idx <- which((params$ss$AGE_START - 1 + cumsum(params$ss$h_ag_span)) %in% 15:49)
 
-  frr_agecat <- dimnames(params$hivtfr)[[1]]
-  frr_agecat_start <- vapply(strsplit(frr_agecat, "-"), function(x) as.integer(x[1]), integer(1))
-  fert_rat_h_ag <- findInterval(params$ss$AGE_START + cumsum(params$ss$h_ag_span[params$ss$h_fert_idx]) - params$ss$h_ag_span[params$ss$h_fert_idx], frr_agecat_start)
+  # leapfrog::process_pjnz returns fert_rat and frr_art6mos already mapped onto
+  # the coarse HIV fertility age groups (one entry per h_fert_idx), so unlike the
+  # Spectrum inputs no age-group remapping is needed here.
+  n_h_fert <- length(params$ss$h_fert_idx)
+  fert_rat <- params$fert_rat[, seq_len(params$proj_years), drop = FALSE]
 
-  params$frr_cd4 <- array(1, c(ss$hDS, length(params$ss$h_fert_idx), params$proj_years))
-  params$frr_cd4[,,] <- rep(params$hivtfr[fert_rat_h_ag, as.character(params$projection_start_year:params$projection_end_year)], each=ss$hDS)
+  params$frr_cd4 <- array(1, c(ss$hDS, n_h_fert, params$proj_years))
+  params$frr_cd4[,,] <- rep(fert_rat, each=ss$hDS)
   params$frr_cd4 <- sweep(params$frr_cd4, 1, params$cd4fert_rat, "*")
   params$frr_cd4 <- params$frr_cd4 * params$frr_scalar
 
-  params$frr_art <- array(1.0, c(ss$hTS, ss$hDS, length(params$ss$h_fert_idx), params$proj_years))
+  params$frr_art <- array(1.0, c(ss$hTS, ss$hDS, n_h_fert, params$proj_years))
   params$frr_art[1,,,] <- params$frr_cd4 # 0-6 months
-  params$frr_art[2:ss$hTS, , , ] <- sweep(params$frr_art[2:ss$hTS, , , ], 3, params$frr_art6mos[fert_rat_h_ag] * params$frr_scalar, "*") # 6-12mos, >1 years
+  params$frr_art[2:ss$hTS, , , ] <- sweep(params$frr_art[2:ss$hTS, , , ], 3, params$frr_art6mos * params$frr_scalar, "*") # 6-12mos, >1 years
 
   has_ancrtsite <- exists("ancsitedat", eppd) && any(eppd$ancsitedat$type == "ancrt")
   has_ancrtcens <- !is.null(eppd$ancrtcens) && (nrow(eppd$ancrtcens) > 0)

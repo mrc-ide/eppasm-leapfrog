@@ -90,17 +90,30 @@ fp_to_leapfrog_params <- function(fp) {
     cd4_nonaids_excess_mort = fp$cd4_nonaids_excess_mort,
     art_nonaids_excess_mort = fp$art_nonaids_excess_mort,
     art_dropout_recover_cd4 = fp$art_dropout_recover_cd4,
-    art_dropout_rate = -log(1.0 - fp$art_dropout / 100),
+    # fp$art_dropout is already the hazard rate -log(1 - p/100), set in
+    # create_specfp()/read_hivproj_param() - do not re-transform it here.
+    art_dropout_rate = fp$art_dropout,
     art15plus_num = fp$art15plus_num,
     art15plus_isperc = fp$art15plus_isperc,
     art_alloc_mxweight = fp$art_alloc_mxweight,
-    h_art_stage_dur = rep(0.5, fp$ss$hiv_steps_per_year - 1),
+    # eppasm's fp always supplies ART as number/percent (art15plus_num +
+    # art15plus_isperc), which is leapfrog's ART_ENTRY_NUMBER_OR_PERCENT (0);
+    # the initiation-rate/by-risk-group entry options aren't reachable from an
+    # eppasm fp, so art_initiation_rate stays zero. Both keys must still be
+    # present or leapfrog::run_model() errors ("Index out of bounds:
+    # [index='art_entry_option']").
+    art_entry_option = 0L,
+    art_initiation_rate = array(0.0, dim = dim(fp$art15plus_num)),
+    h_art_stage_dur = fp$ss$h_art_stage_dur,
     pAG_INCIDPOP = pAG_INCIDPOP,
     pIDX_INCIDPOP = 15L,
     fert_rat = fp$fert_rat,
     cd4fert_rat = fp$cd4fert_rat,
     frr_art6mos = fp$frr_art6mos,
-    frr_scalar = fp$frr_scalar
+    frr_scalar = fp$frr_scalar,
+    pwid_sex_ratio = rep(-1, fp$SIM_YEARS),
+    pwid_hivpos_nonaids_mortality = -1,
+    pwid_prop_hivpop = rep(0, fp$SIM_YEARS)
   )
 
   class(leapfrog_params) <- class(fp)
