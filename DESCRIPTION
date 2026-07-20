@@ -5,6 +5,7 @@ Authors@R: person("Jeff", "Eaton", email = "jeffrey.eaton@imperial.ac.uk", role 
 Description: Age-structured EPP Model for HIV Epidemic Estimates.
 Depends: R (>= 3.1.0),
 Additional_repositories:
+    https://hivtools.r-universe.dev,
     https://mrc-ide.r-universe.dev
 Imports:
     abind (>= 1.4),
