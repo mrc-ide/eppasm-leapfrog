@@ -96,6 +96,14 @@ fp_to_leapfrog_params <- function(fp) {
     art15plus_num = fp$art15plus_num,
     art15plus_isperc = fp$art15plus_isperc,
     art_alloc_mxweight = fp$art_alloc_mxweight,
+    # eppasm's fp always supplies ART as number/percent (art15plus_num +
+    # art15plus_isperc), which is leapfrog's ART_ENTRY_NUMBER_OR_PERCENT (0);
+    # the initiation-rate/by-risk-group entry options aren't reachable from an
+    # eppasm fp, so art_initiation_rate stays zero. Both keys must still be
+    # present or leapfrog::run_model() errors ("Index out of bounds:
+    # [index='art_entry_option']").
+    art_entry_option = 0L,
+    art_initiation_rate = array(0.0, dim = dim(fp$art15plus_num)),
     h_art_stage_dur = fp$ss$h_art_stage_dur,
     pAG_INCIDPOP = pAG_INCIDPOP,
     pIDX_INCIDPOP = 15L,
