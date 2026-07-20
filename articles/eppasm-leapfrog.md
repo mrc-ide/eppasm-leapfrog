@@ -7,12 +7,14 @@ using leapfrog with EPPASM.
 Firstly we need to read the data
 
 ``` r
+
 pjnz <- system.file("extdata/testpjnz", "Mozambique_Maputo_Cidade2018.PJNZ", package="eppasm.lf")
 ```
 
 ## Simulate with direct incidence input
 
 ``` r
+
 fp <- eppasm.lf::prepare_directincid(pjnz)
 mod <- eppasm.lf::simmod(fp, VERSION = "leapfrog")
 ```
@@ -20,6 +22,7 @@ mod <- eppasm.lf::simmod(fp, VERSION = "leapfrog")
 ## Simulate with transmission input
 
 ``` r
+
 theta_rhybrid <- c(-0.407503322169364, -2.76794181367538, -1.26018073624346, 1995.96447776502,
                    -0.00307437171215574, 0.0114118307148102, 0.00760958379603691, 0.02,
                    2.24103194827232, -0.0792123921862689, -5.01917961803606, 0.359444135205712,
@@ -36,6 +39,7 @@ mod <- eppasm.lf::simmod(fp, VERSION = "leapfrog")
 ## Fit model
 
 ``` r
+
 eppasm.lf::fitmod(
   inputs[["Maputo Cidade"]],
   eppmod = "rhybrid",

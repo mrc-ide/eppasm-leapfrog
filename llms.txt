@@ -11,6 +11,7 @@ model.
 Install from [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("mrc-ide/eppasm-leapfrog")
 ```

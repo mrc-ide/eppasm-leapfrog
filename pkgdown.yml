@@ -1,9 +1,9 @@
-pandoc: 3.1.11
-pkgdown: 2.2.0
+pandoc: 3.8.3
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   eppasm-leapfrog: eppasm-leapfrog.html
-last_built: 2026-01-28T13:03Z
+last_built: 2026-07-20T11:21Z
 urls:
   reference: https://mrc-ide.github.io/eppasm-leapfrog/reference
   article: https://mrc-ide.github.io/eppasm-leapfrog/articles
