@@ -1149,7 +1149,7 @@ ll <- function(theta, fp, likdat){
     }
   }
 
-  mod <- simmod(fp)
+  mod <- simmod(fp, VERSION = "leapfrog")
 
   ## ANC likelihood
   if(exists("ancsite.dat", likdat))
@@ -1254,7 +1254,7 @@ ll_lf <- function(theta, fp, likdat) {
     ll_hhs <- 0
   }
 
-  if (!is.null(likdat$hhsincid.dat)) {
+  if (!is.null(likdat$hhsincid_dat)) {
     ll_incid <- ll_hhsincid_lf(mod, fp, likdat$hhsincid_dat)
   } else {
     ll_incid <- 0

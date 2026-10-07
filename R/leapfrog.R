@@ -1,6 +1,38 @@
 # The name of the leapfrog model configuration to run.
 LEAPFROG_MODEL_CONFIG = "HivCoarseAgeStratification"
 
+#' fp$rvec with exactly one value per fp$proj.steps
+#'
+#' rvec in eppasm is different to what is required by leapfrog in a few ways
+#' for rhybrid it can have duplicate years when the curve switches types
+#' So for a fit starting in 1970.5 until 2018.5 with SIM_YEARS of 48
+#' It can e.g. have data for 1970.5, 1970.6, ..., 2002.9, 2003.0, 2003.0,
+#' 2003.1, ..., 2017.3, 2017.4, 2017.5 giving us 472 data points
+#' But leapfrog expects SIM_YEARS * hiv_steps_per_year inputs for
+#' transmission rate. We need to remove the duplicate when we switch from
+#' r-logistic part to random walk part.
+#'
+#' @param fp eppasm fixed parameters, with rvec set by fnCreateParam()
+#'
+#' @returns numeric vector, length(fp$proj.steps)
+#' @noRd
+rvec_by_proj_step <- function(fp) {
+  rvec <- fp$rvec
+  n_steps <- length(fp$proj.steps)
+  if (fp$eppmod == "rhybrid" && length(rvec) == n_steps + 1) {
+    switch_idx <- max(which(fp$proj.steps <= fp$rt$rw_start))
+    rvec <- rvec[-(switch_idx + 1)]
+  }
+  if (length(rvec) != n_steps) {
+    stop(sprintf(
+      "Expected one transmission rate per projection step (%d) but got %d.",
+      n_steps, length(rvec)
+    ))
+  }
+  rvec
+}
+
+
 #' Convert eppasm fp object into leapfrog parameters
 #'
 #' @param fp eppasm fixed parameters
@@ -15,24 +47,24 @@ fp_to_leapfrog_params <- function(fp) {
   if (fp$eppmod %in% c("rspline", "logrw", "rhybrid", "rlogistic")) {
     incidence_model_choice <- 1L
     incid_input <- rep(0, fp$SIM_YEARS + 1)
-    # rvec here is different to what is required by leapfrog in a few ways
-    # for rhybrid it can have duplicate years when the curve switches types
-    # So for a fit starting in 1970.5 until 2018.5 with SIM_YEARS of 48
-    # It can e.g. have data for 1970.5, 1970.6, ..., 2002.9, 2003.0, 2003.0,
-    # 2003.1, ..., 2017.3, 2017.4, 2017.5 giving us 472 data points
-    # But leapfrog expects SIM_YEARS * hiv_steps_per_year inputs for
-    # transmission rate. We are 8 short. Repeat the first entry 8 additional
-    # times for now to get the right length
-    required_length <- fp$SIM_YEARS * fp$ss$hiv_steps_per_year
-    pad_num <- required_length - length(fp$rvec)
-    if (pad_num < 0) {
-      stop("Input transmission data is longer than expected, not supported with leapfrog.")
+    # Line rvec up with leapfrog's time steps by time. Projection year t
+    # (t >= 1) runs mid-year t-1 to mid-year t, so leapfrog's step
+    # t*hts + h (h 0-based) is at time proj_start - 0.5 + (t*hts + h)/hts:
+    # index hts is proj_start + 0.5, the first of fp$proj.steps. Steps
+    # 0..hts-1 belong to year 0, which is never projected, so are never read.
+    # leapfrog reads steps up to (SIM_YEARS - 1)*hts + hts - 1, i.e. the
+    # first (SIM_YEARS - 1)*hts of fp$proj.steps.
+    rvec <- rvec_by_proj_step(fp)
+    hts <- fp$ss$hiv_steps_per_year
+    n_used <- (fp$SIM_YEARS - 1) * hts
+    if (length(rvec) < n_used) {
+      stop("Input transmission data is shorter than expected, not supported with leapfrog.")
     }
-    transmission_rate_hts <- c(rep(fp$rvec[1], pad_num), fp$rvec)
+    transmission_rate_hts <- c(rep(0, hts), rvec[seq_len(n_used)])
     initial_incidence <- fp$iota
 
-    ## Index in proj.steps where epidemic is seeded
-    epidemic_start_hts <- which(fp$proj.steps == fp$tsEpidemicStart)
+    ## leapfrog time step (0-based, as above) where the epidemic is seeded
+    epidemic_start_hts <- which(fp$proj.steps == fp$tsEpidemicStart) - 1L + hts
 
     relative_infectiousness_art <- fp$relinfectART
     pAG_INCIDPOP <- 0
