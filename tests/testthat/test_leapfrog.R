@@ -13,6 +13,7 @@ test_that("can run convert transmission input fp into leapfrog params", {
   expect_true(length(params$transmission_rate_hts) > 0)
   expect_true(any(params$transmission_rate_hts > 0))
   expect_equal(class(params), "specfp")
+  expect_equal(dim(params$births_sex_prop), c(2, length(1970:2025)))
 })
 
 test_that("can convert output from leapfrog into mod data", {

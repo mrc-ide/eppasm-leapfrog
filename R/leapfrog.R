@@ -9,9 +9,7 @@ LEAPFROG_MODEL_CONFIG = "HivCoarseAgeStratification"
 #' @noRd
 fp_to_leapfrog_params <- function(fp) {
 
-  births_sex_prop_male <- fp$srb / (fp$srb + 100)
-  births_sex_prop <- rbind(male = births_sex_prop_male,
-                           female = 1 - births_sex_prop_male)
+  births_sex_prop <- fp$srb
   year_end <- fp$ss$proj_start + fp$SIM_YEARS
 
   if (fp$eppmod %in% c("rspline", "logrw", "rhybrid", "rlogistic")) {
