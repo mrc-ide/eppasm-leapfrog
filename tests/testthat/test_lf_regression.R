@@ -123,10 +123,14 @@ test_that("fitmod_lf with optfit gives the same fit as fitmod", {
                               eppmod = "rhybrid", rw_start = 2005),
                          fit_args))))
 
-  expect_equal(actual$par, expected$par)
-  expect_equal(actual$value, expected$value)
+  # ll and ll_lf differ by floating point error (~1e-12), which the optimiser
+  # amplifies over its iterations by an amount that varies by platform (e.g.
+  # ancbias differed by ~3e-8 on CI), so use a looser tolerance than the default.
+  expect_equal(actual$par, expected$par, tolerance = 1e-6)
+  expect_equal(actual$value, expected$value, tolerance = 1e-6)
   expect_equal(actual$counts, expected$counts)
-  expect_equal(standardise_names(actual$param), standardise_names(expected$param))
+  expect_equal(standardise_names(actual$param), standardise_names(expected$param),
+               tolerance = 1e-6)
 })
 
 # IMIS is a function of the likelihood evaluated at random draws, so with the
