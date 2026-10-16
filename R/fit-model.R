@@ -336,9 +336,9 @@ fitmod <- function(obj, ..., epp=FALSE, B0 = 1e5, B = 1e4, B.re = 3000, number_k
 
     if(opthess){
       if(epp)
-        class(opt) <- c(class, "eppfit")
+        class(opt) <- c(class(opt), "eppfit")
       else
-        class(opt) <- c(class, "specfit")
+        class(opt) <- c(class(opt), "specfit")
     }
 
     return(opt)
@@ -370,6 +370,7 @@ fitmod_lf <- function(lf_params, eppd, epp_t0, ...,
                       sample_prior=sample_prior_lf,
                       prior=prior_lf,
                       likelihood=likelihood_lf,
+                      dsamp=dsamp_lf,
                       optfit=FALSE, opt_method="BFGS", opt_init=NULL,
                       opt_maxit=1000, opt_diffstep=1e-3, opthess=TRUE) {
 
@@ -398,7 +399,7 @@ fitmod_lf <- function(lf_params, eppd, epp_t0, ...,
                                                    ndeps=rep(.Machine$double.eps^0.5, length(opt_init))))
       opt$resample <- mvtnorm::rmvnorm(B.re, opt$par, solve(-opt$hessian))
 
-      class(opt) <- c(class, "specfit")
+      class(opt) <- c(class(opt), "specfit")
     }
 
     return(opt)
@@ -409,7 +410,8 @@ fitmod_lf <- function(lf_params, eppd, epp_t0, ...,
   while(inherits(fit, "try-error")){
     start.time <- proc.time()
     fit <- try(imis(B0, B, B.re, number_k, opt_iter, fp=fp, likdat=likdat,
-                    sample_prior=sample_prior, prior=prior, likelihood=likelihood))
+                    sample_prior=sample_prior, prior=prior, likelihood=likelihood,
+                    dsamp=dsamp))
     fit.time <- proc.time() - start.time
   }
   fit$fp <- fp

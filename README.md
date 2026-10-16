@@ -4,13 +4,14 @@
 # eppasm.lf
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml)  
+[![R-CMD-check](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mrc-ide/eppasm-leapfrog/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of eppasm is to …
 
 Forked from [eppasm](https://github.com/mrc-ide/eppasm) using
-[leapfrog](https://github.com/hivtools/leapfrog) as the underlying model.
+[leapfrog](https://github.com/hivtools/leapfrog) as the underlying
+model.
 
 ## Installation
 
@@ -34,3 +35,18 @@ remotes::install_github("mrc-ide/eppasm-leapfrog")
 
 - Subnational, single EPP region configuration
 - Uses median CD4 count input
+
+## Test coverage
+
+There are regression tests here that check that `fitmod` and `ll` work
+with leapfrog structured data. These are just temporary as we port over,
+but whilst developing it can be useful to get coverage of these
+regression tests
+
+Note this instruments just the R code, to do C code also can use
+`package_coverage` but that is slower.
+
+    cov <- covr::environment_coverage(
+      asNamespace("eppasm.lf"),
+      test_files = "tests/testthat/test_lf_regression.R")
+    covr::report(cov)

@@ -500,7 +500,7 @@ fnCreateParam_lf <- function(theta, fp) {
     if (!is.null(fp$r0logiotaratio) && fp$r0logiotaratio) {
       param$iota <- exp(param$rvec[fp$proj_steps == fp$ts_epidemic_start] * theta[fp$num_knots + 1])
     } else {
-      param$iota <- transf_iota_lf(theta[fp$numKnots + 1], fp)
+      param$iota <- transf_iota_lf(theta[fp$num_knots + 1], fp)
     }
 
   } else if (fp$eppmod == "rlogistic") {
@@ -1635,6 +1635,86 @@ likelihood_lf <- function(theta, fp, likdat, log = FALSE) {
   }
 }
 
+# Density of the initial sampling distribution (see sample_prior_lf) for use in
+# IMIS, version of ldsamp for leapfrog inputs.
+# NOTE: deliberately a like for like port of ldsamp so that fits can be compared
+# against the original code. This includes how ldsamp combines the terms for the
+# rspline and logrw models, which does not look like it matches
+# sample_prior_lf.
+ldsamp_lf <- function(theta, fp) {
+
+  if (fp$eppmod %in% c("rspline", "logrw")) {
+    epp_nparam <- fp$num_knots + 1
+
+    nk <- fp$num_knots
+
+    if (fp$eppmod == "rspline") { # u[1]
+      lpr <- stats::dnorm(theta[1], 1.5, 1, log=TRUE)
+    } else { # logrw
+      lpr <- stats::dnorm(theta[1], 0.2, 1, log=TRUE)
+    }
+
+    if (fp$eppmod == "logrw") {
+      bayes_lmvt(theta[2:fp$rt$n_rw], rw_prior_shape, rw_prior_rate)
+    } else {
+      lpr <- bayes_lmvt(theta[2:nk], tau2_prior_shape, tau2_prior_rate)
+    }
+
+    if (exists("r0logiotaratio", fp) && fp$r0logiotaratio) {
+      lpr <- lpr + stats::dunif(theta[nk + 1], r0logiotaratio.unif.prior[1], r0logiotaratio.unif.prior[2], log=TRUE)
+    } else {
+      lpr <- lpr + ldsamp_iota_lf(theta[nk + 1], fp)
+    }
+
+  } else if (fp$eppmod == "rlogistic") {
+    epp_nparam <- 5
+    lpr <- sum(stats::dnorm(theta[1:4], rlog_pr_mean, rlog_pr_sd, log=TRUE))
+    lpr <- lpr + ldsamp_iota_lf(theta[5], fp)
+  } else if (fp$eppmod == "rtrend") { # rtrend
+
+    epp_nparam <- 7
+
+    lpr <- stats::dunif(round(theta[1]), t0.unif.prior[1], t0.unif.prior[2], log=TRUE) +
+      stats::dnorm(round(theta[2]), t1.pr.mean, t1.pr.sd, log=TRUE) +
+      stats::dnorm(theta[3], logr0.pr.mean, logr0.pr.sd, log=TRUE) +
+      sum(stats::dnorm(theta[4:7], rtrend.beta.pr.mean, rtrend.beta.pr.sd, log=TRUE))
+  } else if (fp$eppmod == "rhybrid") {
+    epp_nparam <- fp$rt$n_param + 1
+    lpr <- sum(stats::dnorm(theta[1:4], rlog_pr_mean, rlog_pr_sd, log=TRUE)) +
+      sum(stats::dnorm(theta[4 + 1:fp$rt$n_rw], 0, rw_prior_sd, log=TRUE))
+    lpr <- lpr + ldsamp_iota_lf(theta[fp$rt$n_param + 1], fp)
+  }
+
+  if (fp$ancsitedata) {
+    lpr <- lpr + stats::dnorm(theta[epp_nparam + 1], ancbias.pr.mean, ancbias.pr.sd, log=TRUE)
+    if (is.null(fp$v_infl)) {
+      anclik_nparam <- 2
+      lpr <- lpr + stats::dexp(exp(theta[epp_nparam + 2]), vinfl.prior.rate, TRUE) + theta[epp_nparam + 2]         # additional ANC variance
+    } else {
+      anclik_nparam <- 1
+    }
+  } else {
+    anclik_nparam <- 0
+  }
+
+  paramcurr <- epp_nparam + anclik_nparam
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("census", "both")) {
+    lpr <- lpr + stats::dnorm(theta[paramcurr + 1], log_frr_adjust.pr.mean, log_frr_adjust.pr.sd, log=TRUE)
+    if (is.null(fp$ancrtcens_vinfl)) {
+      lpr <- lpr + stats::dexp(exp(theta[paramcurr + 2]), ancrtcens.vinfl.pr.rate, TRUE) + theta[paramcurr + 2]
+      paramcurr <- paramcurr + 2
+    } else {
+      paramcurr <- paramcurr + 1
+    }
+  }
+  if (!is.null(fp$ancrt) && fp$ancrt %in% c("site", "both")) {
+    lpr <- lpr + stats::dnorm(theta[paramcurr + 1], ancrtsite.beta.pr.mean, ancrtsite.beta.pr.sd, log=TRUE)
+    paramcurr <- paramcurr + 1
+  }
+
+  lpr
+}
+
 dsamp <- function(theta, fp, log=FALSE){
   if(is.vector(theta))
     lval <- ldsamp(theta, fp)
@@ -1644,4 +1724,17 @@ dsamp <- function(theta, fp, log=FALSE){
     return(lval)
   else
     return(exp(lval))
+}
+
+dsamp_lf <- function(theta, fp, log = FALSE) {
+  if (is.vector(theta)) {
+    lval <- ldsamp_lf(theta, fp)
+  } else {
+    lval <- unlist(lapply(seq_len(nrow(theta)), function(i) (ldsamp_lf(theta[i,], fp))))
+  }
+  if (log) {
+    return(lval)
+  } else {
+    return(exp(lval))
+  }
 }

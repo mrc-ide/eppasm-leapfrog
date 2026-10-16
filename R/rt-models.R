@@ -389,3 +389,4 @@ sample_iota_lf <- function(n, fp){
 }
 
 ldsamp_iota <- lprior_iota
+ldsamp_iota_lf <- lprior_iota_lf
